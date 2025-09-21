@@ -32,7 +32,6 @@ import { RefreshTokenEntity } from '../infrastructure/database/entities/refresh_
           );
         }
 
-
         return {
           type: 'postgres',
           host: host,
