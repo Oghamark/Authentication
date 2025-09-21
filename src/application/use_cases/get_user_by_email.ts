@@ -4,6 +4,7 @@ import { UserWithEmailNotFoundError } from 'src/domain/exceptions/user.exception
 import { IUseCase } from '../interfaces/use_case';
 import { User } from '../../domain/entities/user.entity';
 import { GetUserByEmailRequest } from '../dtos/get_user_by_email_request';
+import { Result } from '../../core/result';
 
 @Injectable()
 export class GetUserByEmailUseCase
@@ -15,10 +16,15 @@ export class GetUserByEmailUseCase
   ) {}
 
   async execute(input: GetUserByEmailRequest) {
-    const user = await this.userRepository.findByEmail(input.email);
-    if (!user) {
-      throw new UserWithEmailNotFoundError(input.email);
-    }
-    return user;
+    const findUserResult = await this.userRepository.findByEmail(input.email);
+
+    const user = findUserResult.on({
+      failure: () => {
+        throw new UserWithEmailNotFoundError(input.email);
+      },
+      success: (user) => user,
+    });
+
+    return Result.success(user);
   }
 }

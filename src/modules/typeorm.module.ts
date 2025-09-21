@@ -1,20 +1,29 @@
-import { Module } from '@nestjs/common';
+import { Logger, Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { RefreshTokenEntity } from 'src/infrastructure/database/entities/refresh_token.entity';
-import { UserEntity } from 'src/infrastructure/database/entities/user.entity';
+import { UserEntity } from '../infrastructure/database/entities/user.entity';
+import { RefreshTokenEntity } from '../infrastructure/database/entities/refresh_token.entity';
 
 @Module({
   imports: [
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => {
+        const logger = new Logger('TypeOrmModule');
         const isProduction =
           configService.get<string>('NODE_ENV') === 'production';
 
         // Validate required environment variables
         const username = configService.get<string>('DATABASE_USERNAME');
         const password = configService.get<string>('DATABASE_PASSWORD');
+        const host = configService.get<string>('DATABASE_HOST', 'localhost');
+        const port = configService.get<number>('DATABASE_PORT', 5432);
+        const database = configService.get<string>(
+          'DATABASE_NAME',
+          'authentication',
+        );
+
+        logger.log(`Connecting to ${database} at ${host}:${port}`);
 
         if (!username || !password) {
           throw new Error(
@@ -23,25 +32,16 @@ import { UserEntity } from 'src/infrastructure/database/entities/user.entity';
           );
         }
 
+
         return {
           type: 'postgres',
-          host: configService.get<string>('DATABASE_HOST', 'localhost'),
-          port: configService.get<number>('DATABASE_PORT', 5432),
+          host: host,
+          port: port,
           username: username,
-          password: password, // Ensure this is a string
-          database: configService.get<string>(
-            'DATABASE_NAME',
-            'authentication',
-          ),
+          password: password,
+          database: database,
           entities: [UserEntity, RefreshTokenEntity],
           synchronize: !isProduction,
-          autoLoadEntities: true,
-          migrations: [__dirname + '/migrations/**/*{.ts,.js}'],
-          seeds: [__dirname + '/seeds/**/*{.ts,.js}'],
-          factories: [__dirname + '/factories/**/*{.ts,.js}'],
-          cli: {
-            migrationsDir: __dirname + '/migrations/',
-          },
           logging: !isProduction,
         };
       },

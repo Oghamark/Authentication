@@ -3,7 +3,6 @@ import { CreateUserUseCase } from 'src/application/use_cases/create_user';
 import { UpdateUserUseCase } from 'src/application/use_cases/update_user';
 import { GetUsersUseCase } from 'src/application/use_cases/get_users';
 import { GetUserByIdUseCase } from 'src/application/use_cases/get_user_by_id';
-import { UserEntity } from 'src/infrastructure/database/entities/user.entity';
 import { DeleteUserByEmailUseCase } from 'src/application/use_cases/delete_user_by_email';
 import { GetUserByIdRequest } from '../../application/dtos/get_user_by_id_request';
 import { CreateUserRequest } from '../../application/dtos/create_user_request';
@@ -21,30 +20,95 @@ export class UserController {
   ) {}
 
   @Get()
-  findAll(): Promise<UserEntity[]> {
-    return this.GetUsersUseCase.execute();
+  async findAll() {
+    const getUsersResult = await this.GetUsersUseCase.execute();
+
+    if (getUsersResult.isFailure) {
+      return {
+        success: false,
+        message: getUsersResult.failure?.message,
+      };
+    }
+
+    return {
+      success: true,
+      value: getUsersResult.value,
+    };
   }
 
   @Get(':id')
-  findById(@Param() params: GetUserByIdRequest): Promise<UserEntity | null> {
-    return this.GetUserByIdUseCase.execute(params);
+  async findById(@Param() params: GetUserByIdRequest) {
+    const getUsersResult = await this.GetUserByIdUseCase.execute(params);
+
+    if (getUsersResult.isFailure) {
+      return {
+        success: false,
+        message: getUsersResult.failure?.message,
+      };
+    }
+
+    return {
+      success: true,
+      value: getUsersResult.value,
+    };
   }
 
   @Post()
-  create(@Body() createUserDto: CreateUserRequest): Promise<UserEntity> {
-    return this.CreateUserUseCase.execute(createUserDto);
+  async create(@Body() createUserDto: CreateUserRequest) {
+    const createUserResult =
+      await this.CreateUserUseCase.execute(createUserDto);
+
+    if (createUserResult.isFailure) {
+      return {
+        success: false,
+        message: createUserResult.failure?.message,
+      };
+    }
+
+    return {
+      success: true,
+      value: createUserResult.value,
+    };
   }
 
   @Post(':id')
-  update(
+  async update(
     @Param() params: { id: string },
     @Body() updateUserDto: Omit<UpdateUserRequest, 'id'>,
-  ): Promise<UserEntity | null> {
-    return this.UpdateUserUseCase.execute({ ...updateUserDto, ...params });
+  ) {
+    const updateUserResult = await this.UpdateUserUseCase.execute({
+      ...updateUserDto,
+      ...params,
+    });
+
+    if (updateUserResult.isFailure) {
+      return {
+        success: false,
+        message: updateUserResult.failure?.message,
+      };
+    }
+
+    return {
+      success: true,
+      value: updateUserResult.value,
+    };
   }
 
   @Delete()
-  delete(@Body() deleteUserDto: DeleteUserByEmailRequest): Promise<void> {
-    return this.DeleteUserByEmailUseCase.execute(deleteUserDto);
+  async delete(@Body() deleteUserDto: DeleteUserByEmailRequest) {
+    const deleteUserByEmailResult =
+      await this.DeleteUserByEmailUseCase.execute(deleteUserDto);
+
+    if (deleteUserByEmailResult.isFailure) {
+      return {
+        success: false,
+        message: deleteUserByEmailResult.failure?.message,
+      };
+    }
+
+    return {
+      success: true,
+      value: deleteUserByEmailResult.value,
+    };
   }
 }

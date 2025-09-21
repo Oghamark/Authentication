@@ -6,6 +6,8 @@ import { RefreshTokenEntity } from '../database/entities/refresh_token.entity';
 import { RefreshToken } from 'src/domain/entities/refresh_token.entity';
 import { RefreshTokenMapper } from '../mappers/refresh_token.mapper';
 import { ICryptoGateway } from 'src/application/interfaces/crypto_gateway';
+import { Result } from '../../core/result';
+import Failure from '../../core/failure';
 
 @Injectable()
 export class TypeOrmRefreshTokenRepository implements IRefreshTokenRepository {
@@ -19,7 +21,7 @@ export class TypeOrmRefreshTokenRepository implements IRefreshTokenRepository {
   async findByTokenAndUserId(
     token: string,
     userId: string,
-  ): Promise<RefreshToken | null> {
+  ): Promise<Result<RefreshToken>> {
     // 1. Get all active tokens for this user
     const entities = await this.repository.find({
       where: {
@@ -35,26 +37,30 @@ export class TypeOrmRefreshTokenRepository implements IRefreshTokenRepository {
         entity.tokenHash,
       );
       if (isMatch) {
-        return RefreshTokenMapper.toDomain(entity);
+        return Result.success(RefreshTokenMapper.toDomain(entity));
       }
     }
 
-    return null;
+    return Result.failure(new Failure('Token not found'));
   }
 
-  async save(refreshToken: RefreshToken): Promise<void> {
+  async save(refreshToken: RefreshToken): Promise<Result<void>> {
     const entity = RefreshTokenMapper.toPersistence(refreshToken);
     await this.repository.save(entity);
+    return Result.success();
   }
-  async revokeByTokenHash(tokenHash: string): Promise<void> {
+  async revokeByTokenHash(tokenHash: string): Promise<Result<void>> {
     await this.repository.delete({ tokenHash: tokenHash });
+    return Result.success();
   }
 
-  async revokeAllByUserId(userId: string): Promise<void> {
+  async revokeAllByUserId(userId: string): Promise<Result<void>> {
     await this.repository.delete({ userId });
+    return Result.success();
   }
 
-  async deleteExpiredTokens(): Promise<void> {
+  async deleteExpiredTokens(): Promise<Result<void>> {
     await this.repository.delete({ expiresAt: LessThan(new Date()) });
+    return Result.success();
   }
 }

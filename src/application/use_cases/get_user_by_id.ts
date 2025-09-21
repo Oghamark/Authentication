@@ -18,7 +18,7 @@ export class GetUserByIdUseCase implements IUseCase<GetUserByIdRequest, User> {
     }
 
     const user = await this.userRepository.findById(id);
-    if (!user) {
+    if (!user.isSuccess) {
       throw new UserNotFoundError(id);
     }
 
