@@ -13,11 +13,16 @@ import { TypeOrmUserRepository } from 'src/infrastructure/repositories/user_repo
 import { AuthController } from 'src/presentation/controllers/auth.controller';
 import { CreateUserUseCase } from '../application/use_cases/create_user';
 import { AdminCreateUserUseCase } from '../application/use_cases/admin_create_user';
+import { AppConfigEntity } from 'src/infrastructure/database/entities/app_config.entity';
+import { TypeOrmAppConfigRepository } from 'src/infrastructure/repositories/app_config_repository';
+import { GetAuthConfigUseCase } from 'src/application/use_cases/get_auth_config';
+import { UpdateAuthConfigUseCase } from 'src/application/use_cases/update_auth_config';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([UserEntity]),
     TypeOrmModule.forFeature([RefreshTokenEntity]),
+    TypeOrmModule.forFeature([AppConfigEntity]),
   ],
   controllers: [AuthController],
   providers: [
@@ -37,6 +42,10 @@ import { AdminCreateUserUseCase } from '../application/use_cases/admin_create_us
       provide: 'CryptoGateway',
       useClass: BcryptCryptoGateway,
     },
+    {
+      provide: 'AppConfigRepository',
+      useClass: TypeOrmAppConfigRepository,
+    },
 
     JwtService,
 
@@ -46,6 +55,8 @@ import { AdminCreateUserUseCase } from '../application/use_cases/admin_create_us
     LoginUseCase,
     LogoutUseCase,
     RefreshTokenUseCase,
+    GetAuthConfigUseCase,
+    UpdateAuthConfigUseCase,
   ],
   exports: [
     'RefreshTokenRepository',

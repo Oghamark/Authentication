@@ -11,6 +11,7 @@ import {
   InvalidCredentialsError,
   InvalidTokenError,
   PasswordsDontMatchException,
+  SignupDisabledError,
 } from '../../domain/exceptions/auth.exceptions';
 import {
   UserAlreadyExistsError,
@@ -55,6 +56,10 @@ export class DomainExceptionFilter implements ExceptionFilter {
       status = HttpStatus.UNPROCESSABLE_ENTITY;
       message = exception.message;
       code = 'PASSWORDS_DONT_MATCH';
+    } else if (exception instanceof SignupDisabledError) {
+      status = HttpStatus.FORBIDDEN;
+      message = exception.message;
+      code = 'SIGNUP_DISABLED';
     } else {
       // Generic error handling
       status = HttpStatus.INTERNAL_SERVER_ERROR;
