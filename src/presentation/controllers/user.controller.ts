@@ -5,7 +5,6 @@ import { UpdateUserUseCase } from 'src/application/use_cases/update_user';
 import { UpdateUserRoleUseCase } from 'src/application/use_cases/update_user_role';
 import { GetUsersUseCase } from 'src/application/use_cases/get_users';
 import { GetUserByIdUseCase } from 'src/application/use_cases/get_user_by_id';
-import { UserEntity } from 'src/infrastructure/database/entities/user.entity';
 import { DeleteUserByEmailUseCase } from 'src/application/use_cases/delete_user_by_email';
 import { GetUserByIdRequest } from '../../application/dtos/get_user_by_id_request';
 import { CreateUserRequest } from '../../application/dtos/create_user_request';
@@ -29,37 +28,28 @@ export class UserController {
   ) {}
 
   @Get()
-  findAll(): Promise<UserEntity[]> {
+  findAll(): Promise<User[]> {
     return this.GetUsersUseCase.execute();
   }
 
   @Get(':id')
-  findById(@Param() params: GetUserByIdRequest): Promise<UserEntity | null> {
+  findById(@Param() params: GetUserByIdRequest): Promise<User> {
     return this.GetUserByIdUseCase.execute(params);
   }
 
   @Post()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')
-  async create(
-    @Body() createUserDto: CreateUserRequest,
-  ): Promise<Omit<UserEntity, 'password'>> {
-    const user = await this.CreateUserUseCase.execute(createUserDto);
-    delete (user as Partial<User>).password;
-    return user;
+  async create(@Body() createUserDto: CreateUserRequest): Promise<User> {
+    return this.CreateUserUseCase.execute(createUserDto);
   }
 
   @Post(':id')
   async update(
     @Param() params: { id: string },
     @Body() updateUserDto: Omit<UpdateUserRequest, 'id'>,
-  ): Promise<Omit<UserEntity, 'password'> | null> {
-    const user = await this.UpdateUserUseCase.execute({
-      ...updateUserDto,
-      ...params,
-    });
-    delete (user as Partial<User>).password;
-    return user;
+  ): Promise<User> {
+    return this.UpdateUserUseCase.execute({ ...updateUserDto, ...params });
   }
 
   @Patch(':id/role')
@@ -69,15 +59,13 @@ export class UserController {
     @Req() request: Request,
     @Param() params: { id: string },
     @Body() updateUserRoleDto: Omit<UpdateUserRoleRequest, 'id' | 'authenticatedUserId'>,
-  ): Promise<Omit<UserEntity, 'password'>> {
+  ): Promise<User> {
     const authenticatedUserId = (request['user'] as { id: string }).id;
-    const user = await this.UpdateUserRoleUseCase.execute({
+    return this.UpdateUserRoleUseCase.execute({
       ...updateUserRoleDto,
       ...params,
       authenticatedUserId,
     });
-    delete (user as Partial<User>).password;
-    return user;
   }
 
   @Delete()

@@ -16,7 +16,7 @@ import { GetAuthConfigUseCase } from '../../application/use_cases/get_auth_confi
 import { UpdateAuthConfigUseCase } from '../../application/use_cases/update_auth_config';
 import { UpdateAuthConfigRequest } from '../../application/dtos/update_auth_config_request';
 
-@Controller('auth')
+@Controller()
 export class AuthController {
   constructor(
     private readonly loginUseCase: LoginUseCase,
