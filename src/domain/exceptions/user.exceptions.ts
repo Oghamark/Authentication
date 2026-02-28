@@ -20,3 +20,10 @@ export class UserWithEmailNotFoundError extends DomainException {
     this.name = 'UserWithEmailNotFoundError';
   }
 }
+
+export class CannotModifyOwnRoleError extends DomainException {
+  constructor() {
+    super('Admins cannot modify their own role');
+    this.name = 'CannotModifyOwnRoleError';
+  }
+}
