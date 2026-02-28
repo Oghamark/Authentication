@@ -20,8 +20,10 @@ import { DeleteUserByEmailRequest } from '../../application/dtos/delete_user_by_
 import { JwtAuthGuard } from '../../infrastructure/guards/jwt_auth.guard';
 import { RolesGuard } from '../../infrastructure/guards/roles.guard';
 import { Roles } from '../../infrastructure/decorators/roles.decorator';
+import { toUserResponse } from '../../application/dtos/user_response';
 
 @Controller('users')
+@UseGuards(JwtAuthGuard)
 export class UserController {
   constructor(
     private readonly CreateUserUseCase: CreateUserUseCase,
@@ -32,6 +34,8 @@ export class UserController {
   ) {}
 
   @Get()
+  @UseGuards(RolesGuard)
+  @Roles('ADMIN')
   async findAll() {
     const getUsersResult = await this.GetUsersUseCase.execute();
 
@@ -44,7 +48,7 @@ export class UserController {
 
     return {
       success: true,
-      value: getUsersResult.value,
+      value: getUsersResult.value!.map(toUserResponse),
     };
   }
 
@@ -61,11 +65,13 @@ export class UserController {
 
     return {
       success: true,
-      value: getUsersResult.value,
+      value: toUserResponse(getUsersResult.value!),
     };
   }
 
   @Post()
+  @UseGuards(RolesGuard)
+  @Roles('ADMIN')
   async create(@Body() createUserDto: CreateUserRequest) {
     const createUserResult =
       await this.CreateUserUseCase.execute(createUserDto);
@@ -79,11 +85,13 @@ export class UserController {
 
     return {
       success: true,
-      value: createUserResult.value,
+      value: toUserResponse(createUserResult.value!),
     };
   }
 
   @Post(':id')
+  @UseGuards(RolesGuard)
+  @Roles('ADMIN')
   async update(
     @Param() params: { id: string },
     @Body() updateUserDto: Omit<UpdateUserRequest, 'id'>,
@@ -102,12 +110,12 @@ export class UserController {
 
     return {
       success: true,
-      value: updateUserResult.value,
+      value: toUserResponse(updateUserResult.value!),
     };
   }
 
   @Patch(':id/role')
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(RolesGuard)
   @Roles('ADMIN')
   async updateRole(
     @Param() params: { id: string },
@@ -127,11 +135,13 @@ export class UserController {
 
     return {
       success: true,
-      value: updateResult.value,
+      value: toUserResponse(updateResult.value!),
     };
   }
 
   @Delete()
+  @UseGuards(RolesGuard)
+  @Roles('ADMIN')
   async delete(@Body() deleteUserDto: DeleteUserByEmailRequest) {
     const deleteUserByEmailResult =
       await this.DeleteUserByEmailUseCase.execute(deleteUserDto);
@@ -145,7 +155,7 @@ export class UserController {
 
     return {
       success: true,
-      value: deleteUserByEmailResult.value,
+      value: null,
     };
   }
 }
