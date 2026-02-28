@@ -1,4 +1,13 @@
-import { Body, Controller, Delete, Get, Param, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
 import { CreateUserUseCase } from 'src/application/use_cases/create_user';
 import { UpdateUserUseCase } from 'src/application/use_cases/update_user';
 import { GetUsersUseCase } from 'src/application/use_cases/get_users';
@@ -8,6 +17,9 @@ import { GetUserByIdRequest } from '../../application/dtos/get_user_by_id_reques
 import { CreateUserRequest } from '../../application/dtos/create_user_request';
 import { UpdateUserRequest } from '../../application/dtos/update_user_request';
 import { DeleteUserByEmailRequest } from '../../application/dtos/delete_user_by_email_request';
+import { JwtAuthGuard } from '../../infrastructure/guards/jwt_auth.guard';
+import { RolesGuard } from '../../infrastructure/guards/roles.guard';
+import { Roles } from '../../infrastructure/decorators/roles.decorator';
 
 @Controller('users')
 export class UserController {
@@ -91,6 +103,31 @@ export class UserController {
     return {
       success: true,
       value: updateUserResult.value,
+    };
+  }
+
+  @Patch(':id/role')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
+  async updateRole(
+    @Param() params: { id: string },
+    @Body() body: { role: string },
+  ) {
+    const updateResult = await this.UpdateUserUseCase.execute({
+      id: params.id,
+      role: body.role,
+    } as UpdateUserRequest);
+
+    if (updateResult.isFailure) {
+      return {
+        success: false,
+        message: updateResult.failure?.message,
+      };
+    }
+
+    return {
+      success: true,
+      value: updateResult.value,
     };
   }
 

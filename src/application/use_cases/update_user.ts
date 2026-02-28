@@ -18,6 +18,7 @@ export class UpdateUserUseCase implements IUseCase<UpdateUserRequest, User> {
     email,
     name,
     password,
+    role,
   }: UpdateUserRequest): Promise<Result<User>> {
     try {
       if (!id) {
@@ -34,6 +35,7 @@ export class UpdateUserUseCase implements IUseCase<UpdateUserRequest, User> {
       user.email = email ?? user.email;
       user.name = name ?? user.name;
       user.password = password ?? user.password;
+      if (role) user.role = role;
 
       await this.userRepository.update(user);
       return Result.success(user);

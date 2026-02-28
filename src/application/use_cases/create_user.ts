@@ -44,8 +44,18 @@ export class CreateUserUseCase implements IUseCase<CreateUserRequest, User> {
     // Hash the password
     const hashedPassword = await this.cryptoGateway.hash(password);
 
+    // First user becomes ADMIN
+    const countResult = await this.userRepository.count();
+    const isFirstUser = countResult.isSuccess && countResult.value === 0;
+    const role = isFirstUser ? 'ADMIN' : 'USER';
+
     // Create user entity
-    const user = UserFactory.create({ name, email, password: hashedPassword });
+    const user = UserFactory.create({
+      name,
+      email,
+      password: hashedPassword,
+      role,
+    });
 
     // Save user to repository
     const saveResult = await this.userRepository.save(user);
