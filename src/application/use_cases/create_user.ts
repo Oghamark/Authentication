@@ -8,7 +8,6 @@ import { UserAlreadyExistsError } from 'src/domain/exceptions/user.exceptions';
 import { CreateUserRequest } from '../dtos/create_user_request';
 import { PasswordsDontMatchException } from '../../domain/exceptions/auth.exceptions';
 import { Result } from '../../core/result';
-import Failure from '../../core/failure';
 
 @Injectable()
 export class CreateUserUseCase implements IUseCase<CreateUserRequest, User> {
@@ -31,8 +30,8 @@ export class CreateUserUseCase implements IUseCase<CreateUserRequest, User> {
     const existingUserResult = await this.userRepository.findByEmail(email);
 
     existingUserResult.on({
-      failure(failure: Failure) {
-        throw new Error(failure.message);
+      failure() {
+        // User not found — email is available, proceed with creation
       },
       success: (existingUser) => {
         if (existingUser) {
