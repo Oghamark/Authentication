@@ -61,4 +61,13 @@ export class User {
   set role(role: string) {
     this._role = role;
   }
+
+  toJSON(): Record<string, unknown> {
+    return {
+      id: this._id,
+      name: this._name,
+      email: this._email,
+      role: this._role,
+    };
+  }
 }

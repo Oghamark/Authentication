@@ -5,10 +5,10 @@ export class SchemaUpdate1772236800000 implements MigrationInterface {
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(
-      `CREATE TABLE "app_config" ("id" integer NOT NULL, "signupEnabled" boolean NOT NULL DEFAULT true, CONSTRAINT "PK_app_config" PRIMARY KEY ("id"))`,
+      `CREATE TABLE IF NOT EXISTS "app_config" ("id" integer NOT NULL, "signupEnabled" boolean NOT NULL DEFAULT true, CONSTRAINT "PK_app_config" PRIMARY KEY ("id"))`,
     );
     await queryRunner.query(
-      `INSERT INTO "app_config" ("id", "signupEnabled") VALUES (1, true)`,
+      `INSERT INTO "app_config" ("id", "signupEnabled") VALUES (1, true) ON CONFLICT DO NOTHING`,
     );
   }
 

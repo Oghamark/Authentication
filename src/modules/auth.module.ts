@@ -63,6 +63,7 @@ import { UpdateAuthConfigUseCase } from 'src/application/use_cases/update_auth_c
     'UserRepository',
     'TokenGateway',
     'CryptoGateway',
+    'AppConfigRepository',
   ],
 })
 export class AuthModule {}
