@@ -9,6 +9,7 @@ import { HttpStatus, Logger } from '@nestjs/common';
 import {
   InvalidCredentialsError,
   PasswordsDontMatchException,
+  SignupDisabledError,
 } from '../../domain/exceptions/auth.exceptions';
 
 const mockAppLoggerService = {
@@ -158,6 +159,23 @@ describe('Domain Exception Filter', () => {
       message: [`Passwords do not match`],
       error: 'PASSWORDS_DONT_MATCH',
       statusCode: HttpStatus.UNPROCESSABLE_ENTITY,
+    });
+  });
+
+  it('Handles SignupDisabled errors', () => {
+    domainExceptionFilter.catch(new SignupDisabledError(), mockArgumentsHost);
+
+    expect(mockHttpArgumentsHost).toHaveBeenCalledTimes(1);
+    expect(mockHttpArgumentsHost).toHaveBeenCalledWith();
+    expect(mockGetResponse).toHaveBeenCalledTimes(1);
+    expect(mockGetResponse).toHaveBeenCalledWith();
+    expect(mockStatus).toHaveBeenCalledTimes(1);
+    expect(mockStatus).toHaveBeenCalledWith(HttpStatus.FORBIDDEN);
+    expect(mockJson).toHaveBeenCalledTimes(1);
+    expect(mockJson).toHaveBeenCalledWith({
+      message: [`Public signup is currently disabled`],
+      error: 'SIGNUP_DISABLED',
+      statusCode: HttpStatus.FORBIDDEN,
     });
   });
 

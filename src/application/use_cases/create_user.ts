@@ -6,7 +6,11 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ICryptoGateway } from '../interfaces/crypto_gateway';
 import { UserAlreadyExistsError } from 'src/domain/exceptions/user.exceptions';
 import { CreateUserRequest } from '../dtos/create_user_request';
-import { PasswordsDontMatchException } from '../../domain/exceptions/auth.exceptions';
+import {
+  PasswordsDontMatchException,
+  SignupDisabledError,
+} from '../../domain/exceptions/auth.exceptions';
+import { IAppConfigRepository } from '../interfaces/app_config_repository';
 
 @Injectable()
 export class CreateUserUseCase implements IUseCase<CreateUserRequest, User> {
@@ -16,10 +20,18 @@ export class CreateUserUseCase implements IUseCase<CreateUserRequest, User> {
 
     @Inject('CryptoGateway')
     private cryptoGateway: ICryptoGateway,
+
+    @Inject('AppConfigRepository')
+    private appConfigRepository: IAppConfigRepository,
   ) {}
 
   async execute(input: CreateUserRequest): Promise<User> {
     const { name, email, password, password_confirmation } = input;
+
+    const config = await this.appConfigRepository.getConfig();
+    if (!config.signupEnabled) {
+      throw new SignupDisabledError();
+    }
 
     if (password !== password_confirmation) {
       throw new PasswordsDontMatchException();
@@ -44,3 +56,4 @@ export class CreateUserUseCase implements IUseCase<CreateUserRequest, User> {
     return user;
   }
 }
+
