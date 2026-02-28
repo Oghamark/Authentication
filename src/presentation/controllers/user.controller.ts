@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Post } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, UseGuards } from '@nestjs/common';
 import { CreateUserUseCase } from 'src/application/use_cases/create_user';
 import { UpdateUserUseCase } from 'src/application/use_cases/update_user';
 import { GetUsersUseCase } from 'src/application/use_cases/get_users';
@@ -10,6 +10,9 @@ import { CreateUserRequest } from '../../application/dtos/create_user_request';
 import { UpdateUserRequest } from '../../application/dtos/update_user_request';
 import { DeleteUserByEmailRequest } from '../../application/dtos/delete_user_by_email_request';
 import { User } from '../../domain/entities/user.entity';
+import { JwtAuthGuard } from '../../infrastructure/guards/jwt_auth.guard';
+import { RolesGuard } from '../../infrastructure/guards/roles.guard';
+import { Roles } from '../../infrastructure/decorators/roles.decorator';
 
 @Controller('users')
 export class UserController {
@@ -32,6 +35,8 @@ export class UserController {
   }
 
   @Post()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
   async create(
     @Body() createUserDto: CreateUserRequest,
   ): Promise<Omit<UserEntity, 'password'>> {
@@ -54,6 +59,8 @@ export class UserController {
   }
 
   @Delete()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
   delete(@Body() deleteUserDto: DeleteUserByEmailRequest): Promise<void> {
     return this.DeleteUserByEmailUseCase.execute(deleteUserDto);
   }

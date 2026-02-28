@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { AuthModule } from 'src/modules/auth.module';
 import { CreateUserUseCase } from 'src/application/use_cases/create_user';
 import { DeleteUserByEmailUseCase } from 'src/application/use_cases/delete_user_by_email';
 import { GetUserByEmailUseCase } from 'src/application/use_cases/get_user_by_email';
@@ -13,7 +14,7 @@ import { TypeOrmUserRepository } from 'src/infrastructure/repositories/user_repo
 import { UserController } from 'src/presentation/controllers/user.controller';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([UserEntity])],
+  imports: [TypeOrmModule.forFeature([UserEntity]), AuthModule],
   providers: [
     // Repository
     {
