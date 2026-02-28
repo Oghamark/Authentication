@@ -1,5 +1,5 @@
 import { ICryptoGateway } from 'src/application/interfaces/crypto_gateway';
-import { hash as bcryptHash, compare, genSalt } from 'bcrypt';
+import { compare, genSalt, hash as bcryptHash } from 'bcrypt';
 
 const saltRounds: number = 10;
 

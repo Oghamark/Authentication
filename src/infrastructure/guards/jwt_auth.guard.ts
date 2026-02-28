@@ -1,8 +1,8 @@
 import {
-  Injectable,
   CanActivate,
-  Inject,
   ExecutionContext,
+  Inject,
+  Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
 import { ITokenGateway } from 'src/application/interfaces/token_gateway';

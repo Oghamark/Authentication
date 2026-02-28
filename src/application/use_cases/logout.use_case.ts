@@ -1,4 +1,4 @@
-import { Injectable, Inject } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { LogoutRequest } from '../dtos/logout_request';
 import { IUseCase } from '../interfaces/use_case';
 import { IRefreshTokenRepository } from '../interfaces/refresh_token_repository';

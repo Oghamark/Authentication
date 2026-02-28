@@ -8,6 +8,7 @@ import { GetUserByIdRequest } from '../../application/dtos/get_user_by_id_reques
 import { CreateUserRequest } from '../../application/dtos/create_user_request';
 import { UpdateUserRequest } from '../../application/dtos/update_user_request';
 import { DeleteUserByEmailRequest } from '../../application/dtos/delete_user_by_email_request';
+import { User } from '../../domain/entities/user.entity';
 
 @Controller('users')
 export class UserController {

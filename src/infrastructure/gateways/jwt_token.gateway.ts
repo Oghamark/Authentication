@@ -1,11 +1,12 @@
-import { Injectable, Inject } from '@nestjs/common';
+import { randomUUID } from 'crypto';
+import { Inject, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { ICryptoGateway } from 'src/application/interfaces/crypto_gateway';
 import { ITokenGateway } from 'src/application/interfaces/token_gateway';
 import {
-  TokenExpiredError,
   InvalidTokenError,
+  TokenExpiredError,
 } from 'src/domain/exceptions/auth.exceptions';
 import { JwtPayload } from 'src/domain/value_objects/jwt_payload';
 
@@ -31,7 +32,7 @@ export class JwtTokenGateway implements ITokenGateway {
     const payload = {
       sub: userId,
       type: 'refresh',
-      jti: crypto.randomUUID(),
+      jti: randomUUID(),
     };
 
     const expiresAt = new Date();
