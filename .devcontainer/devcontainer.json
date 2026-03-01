@@ -1,0 +1,11 @@
+{
+  "name": "Authentication",
+  "dockerComposeFile": "docker-compose.yml",
+  "service": "app",
+  "workspaceFolder": "/workspace",
+  "forwardPorts": [3000],
+  "portsAttributes": {
+    "3000": { "label": "API" }
+  },
+  "postCreateCommand": "npm install"
+}
