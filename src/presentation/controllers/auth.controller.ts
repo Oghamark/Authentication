@@ -13,7 +13,7 @@ import { CreateUserUseCase } from '../../application/use_cases/create_user';
 import { CreateUserRequest } from '../../application/dtos/create_user_request';
 import { InvalidTokenError } from '../../domain/exceptions/auth.exceptions';
 
-@Controller('auth')
+@Controller()
 export class AuthController {
   constructor(
     private readonly loginUseCase: LoginUseCase,

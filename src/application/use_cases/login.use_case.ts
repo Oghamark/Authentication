@@ -49,13 +49,12 @@ export class LoginUseCase implements IUseCase<LoginRequest, LoginResponse> {
     const accessToken = await this.tokenGateway.generateAccessToken(jwtPayload);
 
     // 5. Generate refresh token (only if remember me or long-term access needed)
-    let refreshTokenValue = '';
     // if (request.rememberMe) {
     // TODO: implement rememberMe
     const refreshTokenData = await this.tokenGateway.generateRefreshToken(
       user.id,
     );
-    refreshTokenValue = refreshTokenData.token;
+    const refreshTokenValue = refreshTokenData.token;
     const refreshToken = RefreshToken.create({
       userId: user.id,
       tokenHash: refreshTokenData.tokenHash,
