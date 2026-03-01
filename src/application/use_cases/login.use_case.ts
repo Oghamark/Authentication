@@ -24,11 +24,11 @@ export class LoginUseCase implements IUseCase<LoginRequest, LoginResponse> {
   async execute(request: LoginRequest): Promise<Result<LoginResponse>> {
     // 1. Find and verify user
     const findUserResult = await this.userRepository.findByEmail(request.email);
-    if (!findUserResult.isSuccess) {
+    if (!findUserResult.isSuccess()) {
       throw new InvalidCredentialsError();
     }
 
-    const user = findUserResult.value!;
+    const user = findUserResult.value;
 
     // 2. Verify password
     const isPasswordValid = await this.cryptoGateway.validate(
@@ -62,7 +62,7 @@ export class LoginUseCase implements IUseCase<LoginRequest, LoginResponse> {
     });
     await this.refreshTokenRepository.save(refreshToken);
 
-    return Result.success({
+    return Result.ok({
       accessToken,
       refreshToken: refreshTokenValue,
       expiresAt: jwtPayload.expiresAt,

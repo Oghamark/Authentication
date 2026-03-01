@@ -28,25 +28,17 @@ export class CreateUserUseCase implements IUseCase<CreateUserRequest, User> {
 
     // Check if user already exists
     const existingUserResult = await this.userRepository.findByEmail(email);
-
-    existingUserResult.on({
-      failure() {
-        // User not found — email is available, proceed with creation
-      },
-      success: (existingUser) => {
-        if (existingUser) {
-          Logger.error(`User with email ${email} already exists.`);
-          throw new UserAlreadyExistsError(email);
-        }
-      },
-    });
+    if (existingUserResult.isSuccess()) {
+      Logger.error(`User with email ${email} already exists.`);
+      throw new UserAlreadyExistsError(email);
+    }
 
     // Hash the password
     const hashedPassword = await this.cryptoGateway.hash(password);
 
     // First user becomes ADMIN
     const countResult = await this.userRepository.count();
-    const isFirstUser = countResult.isSuccess && countResult.value === 0;
+    const isFirstUser = !countResult.isFailure() && countResult.value === 0;
     const role = isFirstUser ? 'ADMIN' : 'USER';
 
     // Create user entity
@@ -60,9 +52,9 @@ export class CreateUserUseCase implements IUseCase<CreateUserRequest, User> {
     // Save user to repository
     const saveResult = await this.userRepository.save(user);
 
-    return saveResult.on({
-      success: () => Result.success(user),
-      failure: (failure) => Result.failure(failure),
-    });
+    if (saveResult.isFailure()) {
+      return Result.fail(saveResult.failure);
+    }
+    return Result.ok(user);
   }
 }

@@ -16,13 +16,10 @@ export class DeleteUserByEmailUseCase
   async execute({ email }: DeleteUserByEmailRequest): Promise<Result<void>> {
     const findUserResult = await this.userRepository.findByEmail(email);
 
-    const user = findUserResult.on({
-      failure: () => {
-        throw new UserWithEmailNotFoundError(email);
-      },
-      success: (user) => user,
-    });
+    if (findUserResult.isFailure()) {
+      throw new UserWithEmailNotFoundError(email);
+    }
 
-    return await this.userRepository.delete(user.id);
+    return await this.userRepository.delete(findUserResult.value!.id);
   }
 }

@@ -1,37 +1,29 @@
-import Failure from './failure';
+import { Failure } from './failure';
 
-export class Result<T> {
-  constructor(
-    public readonly value?: T,
-    public readonly failure?: Failure,
-  ) {}
+export class Result<T = void> {
+  readonly success: boolean;
+  readonly failure?: Failure;
+  readonly value?: T;
 
-  public get isSuccess(): boolean {
-    return !!this.value;
+  constructor(success: boolean, value?: T, failure?: Failure) {
+    this.success = success;
+    this.value = value;
+    this.failure = failure;
   }
 
-  public get isFailure(): boolean {
-    return !!this.failure;
+  static ok<T = void>(value?: T): Result<T> {
+    return new Result<T>(true, value);
   }
 
-  static failure<T>(_failure: Failure) {
-    return new Result<T>(undefined, _failure);
+  static fail<T>(failure: Failure, value?: T): Result<T> {
+    return new Result<T>(false, value, failure);
   }
 
-  static success<T>(_value?: T) {
-    return new Result<T>(_value);
+  isSuccess(): this is Result<T> & { value: T } {
+    return this.success;
   }
 
-  public on<U>({
-    success,
-    failure,
-  }: {
-    success: (value: T) => U;
-    failure: (failure: Failure) => U;
-  }) {
-    if (this.isSuccess) {
-      return success(this.value!);
-    }
-    return failure(this.failure!);
+  isFailure(): this is Result<T> & { failure: Failure } {
+    return !this.success;
   }
 }

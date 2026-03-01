@@ -4,7 +4,7 @@ import { IUseCase } from '../interfaces/use_case';
 import { IRefreshTokenRepository } from '../interfaces/refresh_token_repository';
 import { ITokenGateway } from '../interfaces/token_gateway';
 import { Result } from '../../core/result';
-import Failure from '../../core/failure';
+import { GenericFailure } from '../../core/failure';
 
 @Injectable()
 export class LogoutUseCase implements IUseCase<LogoutRequest, void> {
@@ -37,10 +37,10 @@ export class LogoutUseCase implements IUseCase<LogoutRequest, void> {
           );
 
         if (
-          findStoredRefreshTokenResult.isFailure ||
+          findStoredRefreshTokenResult.isFailure() ||
           !findStoredRefreshTokenResult.value?.isValid()
         ) {
-          return Result.failure(new Failure('Invalid refresh token'));
+          return Result.fail(new GenericFailure('Invalid refresh token'));
         }
 
         // Revoke the specific refresh token
@@ -53,6 +53,6 @@ export class LogoutUseCase implements IUseCase<LogoutRequest, void> {
       }
     }
 
-    return Result.failure(new Failure('Unauthorized'));
+    return Result.fail(new GenericFailure('Unauthorized'));
   }
 }

@@ -18,13 +18,10 @@ export class GetUserByEmailUseCase
   async execute(input: GetUserByEmailRequest) {
     const findUserResult = await this.userRepository.findByEmail(input.email);
 
-    const user = findUserResult.on({
-      failure: () => {
-        throw new UserWithEmailNotFoundError(input.email);
-      },
-      success: (user) => user,
-    });
+    if (findUserResult.isFailure()) {
+      throw new UserWithEmailNotFoundError(input.email);
+    }
 
-    return Result.success(user);
+    return Result.ok(findUserResult.value);
   }
 }

@@ -47,7 +47,7 @@ export class RefreshTokenUseCase
       );
 
     if (
-      findStoredRefreshTokenResult.isFailure ||
+      findStoredRefreshTokenResult.isFailure() ||
       !findStoredRefreshTokenResult.value?.isValid()
     ) {
       throw new RefreshTokenRevokedError();
@@ -55,7 +55,7 @@ export class RefreshTokenUseCase
 
     // 3. Verify user still exists
     const findUserResult = await this.userRepository.findById(payload.userId);
-    if (findUserResult.isFailure) {
+    if (findUserResult.isFailure()) {
       // Revoke the refresh token if user is suspended
       await this.refreshTokenRepository.revokeAllByUserId(payload.userId);
       throw new InvalidCredentialsError();
@@ -91,7 +91,7 @@ export class RefreshTokenUseCase
 
     await this.refreshTokenRepository.save(newRefreshToken);
 
-    return Result.success({
+    return Result.ok({
       accessToken: newAccessToken,
       refreshToken: newRefreshTokenData.token,
       expiresAt: jwtPayload.expiresAt,

@@ -39,7 +39,7 @@ export class UserController {
   async findAll() {
     const getUsersResult = await this.GetUsersUseCase.execute();
 
-    if (getUsersResult.isFailure) {
+    if (getUsersResult.isFailure()) {
       return {
         success: false,
         message: getUsersResult.failure?.message,
@@ -56,7 +56,7 @@ export class UserController {
   async findById(@Param() params: GetUserByIdRequest) {
     const getUsersResult = await this.GetUserByIdUseCase.execute(params);
 
-    if (getUsersResult.isFailure) {
+    if (getUsersResult.isFailure()) {
       return {
         success: false,
         message: getUsersResult.failure?.message,
@@ -65,7 +65,7 @@ export class UserController {
 
     return {
       success: true,
-      value: toUserResponse(getUsersResult.value!),
+      value: toUserResponse(getUsersResult.value),
     };
   }
 
@@ -76,7 +76,7 @@ export class UserController {
     const createUserResult =
       await this.CreateUserUseCase.execute(createUserDto);
 
-    if (createUserResult.isFailure) {
+    if (createUserResult.isFailure()) {
       return {
         success: false,
         message: createUserResult.failure?.message,
@@ -101,7 +101,7 @@ export class UserController {
       ...params,
     });
 
-    if (updateUserResult.isFailure) {
+    if (updateUserResult.isFailure()) {
       return {
         success: false,
         message: updateUserResult.failure?.message,
@@ -126,7 +126,7 @@ export class UserController {
       role: body.role,
     } as UpdateUserRequest);
 
-    if (updateResult.isFailure) {
+    if (updateResult.isFailure()) {
       return {
         success: false,
         message: updateResult.failure?.message,
@@ -146,7 +146,7 @@ export class UserController {
     const deleteUserByEmailResult =
       await this.DeleteUserByEmailUseCase.execute(deleteUserDto);
 
-    if (deleteUserByEmailResult.isFailure) {
+    if (deleteUserByEmailResult.isFailure()) {
       return {
         success: false,
         message: deleteUserByEmailResult.failure?.message,

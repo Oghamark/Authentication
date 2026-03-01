@@ -33,7 +33,7 @@ export class AuthController {
       password: loginDto.password,
     });
 
-    if (result.isFailure) {
+    if (result.isFailure()) {
       return {
         success: false,
       };
@@ -77,7 +77,7 @@ export class AuthController {
   ) {
     const createUserResult = await this.createUserUseCase.execute(signUpDto);
 
-    if (createUserResult.isFailure) {
+    if (createUserResult.isFailure()) {
       return {
         success: false,
       };
@@ -90,7 +90,7 @@ export class AuthController {
       password: signUpDto.password,
     });
 
-    if (loginResult.isFailure) {
+    if (loginResult.isFailure()) {
       return {
         success: false,
         message: loginResult.failure?.message,
@@ -143,7 +143,7 @@ export class AuthController {
 
     const result = await this.refreshTokenUseCase.execute({ refreshToken });
 
-    if (result.isFailure) {
+    if (result.isFailure()) {
       return {
         success: false,
         message: result.failure?.message,

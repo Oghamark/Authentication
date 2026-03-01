@@ -26,7 +26,7 @@ export class UpdateUserUseCase implements IUseCase<UpdateUserRequest, User> {
       }
 
       const findUserResult = await this.userRepository.findById(id);
-      if (findUserResult.isFailure) {
+      if (findUserResult.isFailure()) {
         throw new UserNotFoundError(id);
       }
 
@@ -38,7 +38,7 @@ export class UpdateUserUseCase implements IUseCase<UpdateUserRequest, User> {
       if (role) user.role = role;
 
       await this.userRepository.update(user);
-      return Result.success(user);
+      return Result.ok(user);
     } catch (error) {
       throw new Error(`Error updating user: ${error}`);
     }
