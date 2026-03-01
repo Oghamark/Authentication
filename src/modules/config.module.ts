@@ -7,6 +7,7 @@ import { GetAuthConfigUseCase } from '../application/use_cases/get_auth_config';
 import { UpdateAuthConfigUseCase } from '../application/use_cases/update_auth_config';
 import { ConfigController } from '../presentation/controllers/config.controller';
 import { JwtTokenGateway } from '../infrastructure/gateways/jwt_token.gateway';
+import { BcryptCryptoGateway } from '../infrastructure/gateways/bcrypt_crypto.gateway';
 
 @Module({
   imports: [TypeOrmModule.forFeature([AuthConfigEntity])],
@@ -19,6 +20,10 @@ import { JwtTokenGateway } from '../infrastructure/gateways/jwt_token.gateway';
     {
       provide: 'TokenGateway',
       useClass: JwtTokenGateway,
+    },
+    {
+      provide: 'CryptoGateway',
+      useClass: BcryptCryptoGateway,
     },
     JwtService,
     GetAuthConfigUseCase,
