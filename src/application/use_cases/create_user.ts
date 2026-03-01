@@ -6,11 +6,8 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ICryptoGateway } from '../interfaces/crypto_gateway';
 import { UserAlreadyExistsError } from 'src/domain/exceptions/user.exceptions';
 import { CreateUserRequest } from '../dtos/create_user_request';
-import {
-  PasswordsDontMatchException,
-  SignupDisabledError,
-} from '../../domain/exceptions/auth.exceptions';
-import { IAppConfigRepository } from '../interfaces/app_config_repository';
+import { PasswordsDontMatchException } from '../../domain/exceptions/auth.exceptions';
+import { Result } from '../../core/result';
 
 @Injectable()
 export class CreateUserUseCase implements IUseCase<CreateUserRequest, User> {
@@ -20,26 +17,18 @@ export class CreateUserUseCase implements IUseCase<CreateUserRequest, User> {
 
     @Inject('CryptoGateway')
     private cryptoGateway: ICryptoGateway,
-
-    @Inject('AppConfigRepository')
-    private appConfigRepository: IAppConfigRepository,
   ) {}
 
-  async execute(input: CreateUserRequest): Promise<User> {
+  async execute(input: CreateUserRequest): Promise<Result<User>> {
     const { name, email, password, password_confirmation } = input;
-
-    const config = await this.appConfigRepository.getConfig();
-    if (!config.signupEnabled) {
-      throw new SignupDisabledError();
-    }
 
     if (password !== password_confirmation) {
       throw new PasswordsDontMatchException();
     }
 
     // Check if user already exists
-    const existingUser = await this.userRepository.findByEmail(email);
-    if (existingUser) {
+    const existingUserResult = await this.userRepository.findByEmail(email);
+    if (existingUserResult.isSuccess()) {
       Logger.error(`User with email ${email} already exists.`);
       throw new UserAlreadyExistsError(email);
     }
@@ -47,17 +36,26 @@ export class CreateUserUseCase implements IUseCase<CreateUserRequest, User> {
     // Hash the password
     const hashedPassword = await this.cryptoGateway.hash(password);
 
-    // Assign ADMIN role to the first user, USER role to all subsequent users
-    const userCount = await this.userRepository.count();
-    const role = userCount === 0 ? 'ADMIN' : 'USER';
+    // First user becomes ADMIN
+    const countResult = await this.userRepository.count();
+    const isFirstUser = !countResult.isFailure() && countResult.value === 0;
+    const role = isFirstUser ? 'ADMIN' : 'USER';
 
     // Create user entity
-    const user = UserFactory.create({ name, email, password: hashedPassword, role });
+    const user = UserFactory.create({
+      name,
+      email,
+      password: hashedPassword,
+      role,
+    });
 
     // Save user to repository
-    await this.userRepository.save(user);
+    const saveResult = await this.userRepository.save(user);
 
-    return user;
+    if (saveResult.isFailure()) {
+      return Result.fail(saveResult.failure);
+    }
+    return Result.ok(user);
   }
 }
 

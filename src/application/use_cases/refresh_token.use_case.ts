@@ -12,6 +12,7 @@ import { RefreshTokenResponse } from '../dtos/refresh_token_response';
 import { IRefreshTokenRepository } from '../interfaces/refresh_token_repository';
 import { ITokenGateway } from '../interfaces/token_gateway';
 import { IUseCase } from '../interfaces/use_case';
+import { Result } from '../../core/result';
 
 @Injectable()
 export class RefreshTokenUseCase
@@ -28,7 +29,7 @@ export class RefreshTokenUseCase
 
   async execute({
     refreshToken,
-  }: RefreshTokenRequest): Promise<RefreshTokenResponse> {
+  }: RefreshTokenRequest): Promise<Result<RefreshTokenResponse>> {
     // 1. Verify JWT structure first (to get userId)
     let payload: { userId: string; token?: string };
     try {
@@ -39,23 +40,28 @@ export class RefreshTokenUseCase
     }
 
     // 2. Find token by verifying against stored hashes
-    const storedRefreshToken =
+    const findStoredRefreshTokenResult =
       await this.refreshTokenRepository.findByTokenAndUserId(
         refreshToken,
         payload.userId,
       );
 
-    if (!storedRefreshToken || !storedRefreshToken.isValid()) {
+    if (
+      findStoredRefreshTokenResult.isFailure() ||
+      !findStoredRefreshTokenResult.value?.isValid()
+    ) {
       throw new RefreshTokenRevokedError();
     }
 
     // 3. Verify user still exists
-    const user = await this.userRepository.findById(payload.userId);
-    if (!user) {
+    const findUserResult = await this.userRepository.findById(payload.userId);
+    if (findUserResult.isFailure()) {
       // Revoke the refresh token if user is suspended
       await this.refreshTokenRepository.revokeAllByUserId(payload.userId);
       throw new InvalidCredentialsError();
     }
+
+    const user = findUserResult.value!;
 
     // 4. Generate new access token
     const jwtPayload = JwtPayload.create({
@@ -74,7 +80,7 @@ export class RefreshTokenUseCase
 
     // 6. Revoke old refresh token and save new one
     await this.refreshTokenRepository.revokeByTokenHash(
-      storedRefreshToken.tokenHash,
+      findStoredRefreshTokenResult.value.tokenHash,
     );
 
     const newRefreshToken = RefreshToken.create({
@@ -85,10 +91,10 @@ export class RefreshTokenUseCase
 
     await this.refreshTokenRepository.save(newRefreshToken);
 
-    return {
+    return Result.ok({
       accessToken: newAccessToken,
       refreshToken: newRefreshTokenData.token,
       expiresAt: jwtPayload.expiresAt,
-    };
+    });
   }
 }

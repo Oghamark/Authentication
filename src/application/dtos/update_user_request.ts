@@ -1,6 +1,8 @@
 import {
   IsEmail,
+  IsIn,
   IsNotEmpty,
+  IsOptional,
   IsString,
   IsStrongPassword,
 } from 'class-validator';
@@ -10,13 +12,19 @@ export class UpdateUserRequest {
   @IsString()
   id: string;
 
-  @IsNotEmpty()
+  @IsOptional()
   @IsString()
   name: string;
 
+  @IsOptional()
   @IsEmail()
   email: string;
 
+  @IsOptional()
   @IsStrongPassword()
   password: string;
+
+  @IsOptional()
+  @IsIn(['USER', 'ADMIN'])
+  role?: string;
 }

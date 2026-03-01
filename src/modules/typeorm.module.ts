@@ -1,25 +1,33 @@
-import { Module } from '@nestjs/common';
+import { Logger, Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { RefreshTokenEntity } from 'src/infrastructure/database/entities/refresh_token.entity';
-import { UserEntity } from 'src/infrastructure/database/entities/user.entity';
-import { AppConfigEntity } from 'src/infrastructure/database/entities/app_config.entity';
-import { SchemaUpdate1754842692371 } from 'src/migrations/1754842692371-schema-update';
-import { SchemaUpdate1739836800000 } from 'src/migrations/1739836800000-schema-update';
-import { SchemaUpdate1755468318119 } from 'src/migrations/1755468318119-schema-update';
-import { SchemaUpdate1772236800000 } from 'src/migrations/1772236800000-schema-update';
+import { UserEntity } from '../infrastructure/database/entities/user.entity';
+import { RefreshTokenEntity } from '../infrastructure/database/entities/refresh_token.entity';
+import { AuthConfigEntity } from '../infrastructure/database/entities/auth_config.entity';
+import { SchemaUpdate1754842692371 } from '../migrations/1754842692371-schema-update';
+import { SchemaUpdate1754842692372 } from '../migrations/1754842692372-schema-update';
+import { AuthConfig1772326398310 } from '../migrations/1772326398310-auth-config';
 
 @Module({
   imports: [
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => {
+        const logger = new Logger('TypeOrmModule');
         const isProduction =
           configService.get<string>('NODE_ENV') === 'production';
 
         // Validate required environment variables
         const username = configService.get<string>('DATABASE_USERNAME');
         const password = configService.get<string>('DATABASE_PASSWORD');
+        const host = configService.get<string>('DATABASE_HOST', 'localhost');
+        const port = configService.get<number>('DATABASE_PORT', 5432);
+        const database = configService.get<string>(
+          'DATABASE_NAME',
+          'authentication',
+        );
+
+        logger.log(`Connecting to ${database} at ${host}:${port}`);
 
         if (!username || !password) {
           throw new Error(
@@ -30,24 +38,20 @@ import { SchemaUpdate1772236800000 } from 'src/migrations/1772236800000-schema-u
 
         return {
           type: 'postgres',
-          host: configService.get<string>('DATABASE_HOST', 'localhost'),
-          port: configService.get<number>('DATABASE_PORT', 5432),
+          host: host,
+          port: port,
           username: username,
           password: password,
-          database: configService.get<string>(
-            'DATABASE_NAME',
-            'authentication',
-          ),
-          entities: [UserEntity, RefreshTokenEntity, AppConfigEntity],
+          database: database,
+          entities: [UserEntity, RefreshTokenEntity, AuthConfigEntity],
           migrations: [
             SchemaUpdate1754842692371,
-            SchemaUpdate1739836800000,
-            SchemaUpdate1755468318119,
-            SchemaUpdate1772236800000,
+            SchemaUpdate1754842692372,
+            AuthConfig1772326398310,
           ],
           migrationsRun: true,
           migrationsTableName: 'migration_table',
-          synchronize: false,
+          synchronize: !isProduction,
           logging: !isProduction,
         };
       },

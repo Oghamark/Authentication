@@ -3,6 +3,8 @@ import { LogoutRequest } from '../dtos/logout_request';
 import { IUseCase } from '../interfaces/use_case';
 import { IRefreshTokenRepository } from '../interfaces/refresh_token_repository';
 import { ITokenGateway } from '../interfaces/token_gateway';
+import { Result } from '../../core/result';
+import { GenericFailure } from '../../core/failure';
 
 @Injectable()
 export class LogoutUseCase implements IUseCase<LogoutRequest, void> {
@@ -13,7 +15,7 @@ export class LogoutUseCase implements IUseCase<LogoutRequest, void> {
     private readonly tokenGateway: ITokenGateway,
   ) {}
 
-  async execute(request: LogoutRequest): Promise<void> {
+  async execute(request: LogoutRequest): Promise<Result<void>> {
     if (request.logoutAll) {
       // Logout from all devices - revoke all refresh tokens
       // Note: We need user ID for this, so it should be passed in the request
@@ -28,24 +30,29 @@ export class LogoutUseCase implements IUseCase<LogoutRequest, void> {
         );
 
         // Find the refresh token by user ID and token hash
-        const storedRefreshToken =
+        const findStoredRefreshTokenResult =
           await this.refreshTokenRepository.findByTokenAndUserId(
             request.refreshToken,
             refreshTokenData.userId,
           );
 
-        if (!storedRefreshToken || !storedRefreshToken.isValid()) {
-          return;
+        if (
+          findStoredRefreshTokenResult.isFailure() ||
+          !findStoredRefreshTokenResult.value?.isValid()
+        ) {
+          return Result.fail(new GenericFailure('Invalid refresh token'));
         }
 
         // Revoke the specific refresh token
-        await this.refreshTokenRepository.revokeByTokenHash(
-          storedRefreshToken.tokenHash,
+        return await this.refreshTokenRepository.revokeByTokenHash(
+          findStoredRefreshTokenResult.value.tokenHash,
         );
       } catch (error) {
         console.error(error);
         throw error; // Rethrow to be caught by the route handler response
       }
     }
+
+    return Result.fail(new GenericFailure('Unauthorized'));
   }
 }

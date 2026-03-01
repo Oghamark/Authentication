@@ -10,6 +10,7 @@ on:
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
+  NODE_VERSION: '20'
 
 jobs:
   # ─── Build ────────────────────────────────────────────────────────────────────
@@ -40,7 +41,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
 
       - name: Install dependencies
@@ -133,6 +134,15 @@ jobs:
           name: backend-build
           path: build/
 
+      - name: Download Node.js binary
+        run: |
+          mkdir -p node-bundle
+          NODE_FULL="$(curl -s https://nodejs.org/dist/latest-v${{ env.NODE_VERSION }}.x/SHASUMS256.txt \
+            | head -1 | grep -oP 'node-v[\d.]+'| sed 's/node-//')"
+          echo "Bundling Node.js ${NODE_FULL}"
+          curl -fsSL "https://nodejs.org/dist/${NODE_FULL}/node-${NODE_FULL}-linux-x64.tar.xz" \
+            | tar -xJ --strip-components=1 -C node-bundle
+
       - name: Build .deb
         id: pkg
         env:
@@ -144,6 +154,7 @@ jobs:
           install -d pkg/DEBIAN
           install -d pkg/opt/authentication/dist
           install -d pkg/opt/authentication/node_modules
+          install -d pkg/opt/authentication/node
           install -d pkg/opt/authentication/src/migrations
           install -d pkg/etc/default
           install -d pkg/etc/systemd/system
@@ -154,10 +165,14 @@ jobs:
           cp build/src/data-source.ts pkg/opt/authentication/src/data-source.ts
           cp -r build/src/migrations/. pkg/opt/authentication/src/migrations/
 
+          # Bundle Node.js runtime (only bin/node and lib/)
+          cp node-bundle/bin/node pkg/opt/authentication/node/
+          cp -r node-bundle/lib pkg/opt/authentication/node/
+
           cp packaging/deb/authentication.env pkg/etc/default/authentication
           cp packaging/deb/authentication.service pkg/etc/systemd/system/authentication.service
 
-          printf 'Package: %s\nVersion: %s\nArchitecture: amd64\nDepends: nodejs (>= 18)\nMaintainer: %s <%s@users.noreply.github.com>\nDescription: Authentication — self-hosted authentication backend\n NestJS API server for user authentication and authorization.\n Runs as a systemd service reading config from\n /etc/default/authentication.\n' \
+          printf 'Package: %s\nVersion: %s\nArchitecture: amd64\nMaintainer: %s <%s@users.noreply.github.com>\nDescription: Authentication — self-hosted authentication backend\n NestJS API server for user authentication and authorization.\n Bundles its own Node.js runtime. Runs as a systemd service\n reading config from /etc/default/authentication.\n' \
             "$PKG" "$VERSION" "$GITHUB_REPOSITORY_OWNER" "$GITHUB_REPOSITORY_OWNER" \
             > pkg/DEBIAN/control
 

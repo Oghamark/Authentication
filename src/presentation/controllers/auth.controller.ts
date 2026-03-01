@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Patch, Post, Req, Res, UseGuards } from '@nestjs/common';
+import { Body, Controller, ForbiddenException, Get, Patch, Post, Req, Res, UseGuards } from '@nestjs/common';
 import { Request, Response } from 'express';
 import { LoginRequest } from 'src/application/dtos/login_request';
 import { AdminCreateUserRequest } from 'src/application/dtos/admin_create_user_request';
@@ -38,9 +38,15 @@ export class AuthController {
       password: loginDto.password,
     });
 
+    if (result.isFailure()) {
+      return {
+        success: false,
+      };
+    }
+
     // Set refresh token as httpOnly cookie (only if provided)
-    if (result.refreshToken) {
-      response.cookie('refresh_token', result.refreshToken, {
+    if (result.value?.refreshToken) {
+      response.cookie('refresh_token', result.value?.refreshToken, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'strict',
@@ -49,8 +55,8 @@ export class AuthController {
       });
     }
 
-    if (result.accessToken) {
-      response.cookie('access_token', result.accessToken, {
+    if (result.value?.accessToken) {
+      response.cookie('access_token', result.value?.accessToken, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax',
@@ -62,9 +68,9 @@ export class AuthController {
     return {
       success: true,
       value: {
-        accessToken: result.accessToken,
-        userId: result.userId,
-        expiresAt: result.expiresAt,
+        accessToken: result.value?.accessToken,
+        userId: result.value?.userId,
+        expiresAt: result.value?.expiresAt,
       },
     };
   }
@@ -74,11 +80,37 @@ export class AuthController {
     @Body() signUpDto: CreateUserRequest,
     @Res({ passthrough: true }) response: Response,
   ) {
-    const user = await this.createUserUseCase.execute(signUpDto);
-    const loginResponse = await this.loginUseCase.execute({
+    const configResult = await this.getAuthConfigUseCase.execute();
+    if (
+      !configResult.isFailure() &&
+      configResult.value?.signupEnabled === false
+    ) {
+      throw new ForbiddenException('Registration is disabled');
+    }
+
+    const createUserResult = await this.createUserUseCase.execute(signUpDto);
+
+    if (createUserResult.isFailure()) {
+      return {
+        success: false,
+      };
+    }
+
+    const user = createUserResult.value!;
+
+    const loginResult = await this.loginUseCase.execute({
       email: user.email,
       password: signUpDto.password,
     });
+
+    if (loginResult.isFailure()) {
+      return {
+        success: false,
+        message: loginResult.failure?.message,
+      };
+    }
+
+    const loginResponse = loginResult.value!;
 
     // Set refresh token as httpOnly cookie (only if provided)
     if (loginResponse.refreshToken) {
@@ -124,8 +156,17 @@ export class AuthController {
 
     const result = await this.refreshTokenUseCase.execute({ refreshToken });
 
+    if (result.isFailure()) {
+      return {
+        success: false,
+        message: result.failure?.message,
+      };
+    }
+
+    const refreshTokenResponse = result.value!;
+
     // Set new refresh token as cookie
-    response.cookie('access_token', result.accessToken, {
+    response.cookie('access_token', refreshTokenResponse.accessToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
@@ -136,8 +177,8 @@ export class AuthController {
     return {
       success: true,
       value: {
-        accessToken: result.accessToken,
-        expiresAt: result.expiresAt,
+        accessToken: refreshTokenResponse.accessToken,
+        expiresAt: refreshTokenResponse.expiresAt,
       },
     };
   }

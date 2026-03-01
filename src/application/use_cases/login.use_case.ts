@@ -9,6 +9,7 @@ import { ITokenGateway } from '../interfaces/token_gateway';
 import { InvalidCredentialsError } from 'src/domain/exceptions/auth.exceptions';
 import { JwtPayload } from 'src/domain/value_objects/jwt_payload';
 import { RefreshToken } from 'src/domain/entities/refresh_token.entity';
+import { Result } from '../../core/result';
 
 @Injectable()
 export class LoginUseCase implements IUseCase<LoginRequest, LoginResponse> {
@@ -20,12 +21,14 @@ export class LoginUseCase implements IUseCase<LoginRequest, LoginResponse> {
     @Inject('TokenGateway') private readonly tokenGateway: ITokenGateway,
   ) {}
 
-  async execute(request: LoginRequest): Promise<LoginResponse> {
+  async execute(request: LoginRequest): Promise<Result<LoginResponse>> {
     // 1. Find and verify user
-    const user = await this.userRepository.findByEmail(request.email);
-    if (!user) {
+    const findUserResult = await this.userRepository.findByEmail(request.email);
+    if (!findUserResult.isSuccess()) {
       throw new InvalidCredentialsError();
     }
+
+    const user = findUserResult.value;
 
     // 2. Verify password
     const isPasswordValid = await this.cryptoGateway.validate(
@@ -46,13 +49,12 @@ export class LoginUseCase implements IUseCase<LoginRequest, LoginResponse> {
     const accessToken = await this.tokenGateway.generateAccessToken(jwtPayload);
 
     // 5. Generate refresh token (only if remember me or long-term access needed)
-    let refreshTokenValue = '';
     // if (request.rememberMe) {
     // TODO: implement rememberMe
     const refreshTokenData = await this.tokenGateway.generateRefreshToken(
       user.id,
     );
-    refreshTokenValue = refreshTokenData.token;
+    const refreshTokenValue = refreshTokenData.token;
     const refreshToken = RefreshToken.create({
       userId: user.id,
       tokenHash: refreshTokenData.tokenHash,
@@ -60,11 +62,11 @@ export class LoginUseCase implements IUseCase<LoginRequest, LoginResponse> {
     });
     await this.refreshTokenRepository.save(refreshToken);
 
-    return {
+    return Result.ok({
       accessToken,
       refreshToken: refreshTokenValue,
       expiresAt: jwtPayload.expiresAt,
       userId: user.id,
-    };
+    });
   }
 }

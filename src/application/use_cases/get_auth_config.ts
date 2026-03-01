@@ -1,17 +1,15 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { IAppConfigRepository } from '../interfaces/app_config_repository';
-import { IUseCase } from '../interfaces/use_case';
+import { IAuthConfigRepository } from '../interfaces/auth_config_repository';
+import { Result } from '../../core/result';
 
 @Injectable()
-export class GetAuthConfigUseCase
-  implements IUseCase<undefined, { signupEnabled: boolean }>
-{
+export class GetAuthConfigUseCase {
   constructor(
-    @Inject('AppConfigRepository')
-    private readonly appConfigRepository: IAppConfigRepository,
+    @Inject('AuthConfigRepository')
+    private readonly authConfigRepository: IAuthConfigRepository,
   ) {}
 
-  async execute(): Promise<{ signupEnabled: boolean }> {
-    return this.appConfigRepository.getConfig();
+  async execute(): Promise<Result<{ signupEnabled: boolean }>> {
+    return this.authConfigRepository.get();
   }
 }

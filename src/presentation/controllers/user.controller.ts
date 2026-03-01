@@ -1,5 +1,13 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Req, UseGuards } from '@nestjs/common';
-import { Request } from 'express';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
 import { CreateUserUseCase } from 'src/application/use_cases/create_user';
 import { UpdateUserUseCase } from 'src/application/use_cases/update_user';
 import { UpdateUserRoleUseCase } from 'src/application/use_cases/update_user_role';
@@ -11,12 +19,13 @@ import { CreateUserRequest } from '../../application/dtos/create_user_request';
 import { UpdateUserRequest } from '../../application/dtos/update_user_request';
 import { UpdateUserRoleRequest } from '../../application/dtos/update_user_role_request';
 import { DeleteUserByEmailRequest } from '../../application/dtos/delete_user_by_email_request';
-import { User } from '../../domain/entities/user.entity';
 import { JwtAuthGuard } from '../../infrastructure/guards/jwt_auth.guard';
 import { RolesGuard } from '../../infrastructure/guards/roles.guard';
 import { Roles } from '../../infrastructure/decorators/roles.decorator';
+import { toUserResponse } from '../../application/dtos/user_response';
 
 @Controller('users')
+@UseGuards(JwtAuthGuard)
 export class UserController {
   constructor(
     private readonly CreateUserUseCase: CreateUserUseCase,
@@ -28,50 +37,128 @@ export class UserController {
   ) {}
 
   @Get()
-  findAll(): Promise<User[]> {
-    return this.GetUsersUseCase.execute();
+  @UseGuards(RolesGuard)
+  @Roles('ADMIN')
+  async findAll() {
+    const getUsersResult = await this.GetUsersUseCase.execute();
+
+    if (getUsersResult.isFailure()) {
+      return {
+        success: false,
+        message: getUsersResult.failure?.message,
+      };
+    }
+
+    return {
+      success: true,
+      value: getUsersResult.value!.map(toUserResponse),
+    };
   }
 
   @Get(':id')
-  findById(@Param() params: GetUserByIdRequest): Promise<User> {
-    return this.GetUserByIdUseCase.execute(params);
+  async findById(@Param() params: GetUserByIdRequest) {
+    const getUsersResult = await this.GetUserByIdUseCase.execute(params);
+
+    if (getUsersResult.isFailure()) {
+      return {
+        success: false,
+        message: getUsersResult.failure?.message,
+      };
+    }
+
+    return {
+      success: true,
+      value: toUserResponse(getUsersResult.value),
+    };
   }
 
   @Post()
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(RolesGuard)
   @Roles('ADMIN')
-  async create(@Body() createUserDto: CreateUserRequest): Promise<User> {
-    return this.CreateUserUseCase.execute(createUserDto);
+  async create(@Body() createUserDto: CreateUserRequest) {
+    const createUserResult =
+      await this.CreateUserUseCase.execute(createUserDto);
+
+    if (createUserResult.isFailure()) {
+      return {
+        success: false,
+        message: createUserResult.failure?.message,
+      };
+    }
+
+    return {
+      success: true,
+      value: toUserResponse(createUserResult.value!),
+    };
   }
 
   @Post(':id')
+  @UseGuards(RolesGuard)
+  @Roles('ADMIN')
   async update(
     @Param() params: { id: string },
     @Body() updateUserDto: Omit<UpdateUserRequest, 'id'>,
-  ): Promise<User> {
-    return this.UpdateUserUseCase.execute({ ...updateUserDto, ...params });
+  ) {
+    const updateUserResult = await this.UpdateUserUseCase.execute({
+      ...updateUserDto,
+      ...params,
+    });
+
+    if (updateUserResult.isFailure()) {
+      return {
+        success: false,
+        message: updateUserResult.failure?.message,
+      };
+    }
+
+    return {
+      success: true,
+      value: toUserResponse(updateUserResult.value!),
+    };
   }
 
   @Patch(':id/role')
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(RolesGuard)
   @Roles('ADMIN')
   async updateRole(
-    @Req() request: Request,
     @Param() params: { id: string },
-    @Body() updateUserRoleDto: Omit<UpdateUserRoleRequest, 'id' | 'authenticatedUserId'>,
-  ): Promise<User> {
-    const authenticatedUserId = (request['user'] as { id: string }).id;
-    return this.UpdateUserRoleUseCase.execute({
-      ...updateUserRoleDto,
-      ...params,
-      authenticatedUserId,
-    });
+    @Body() body: { role: string },
+  ) {
+    const updateResult = await this.UpdateUserUseCase.execute({
+      id: params.id,
+      role: body.role,
+    } as UpdateUserRequest);
+
+    if (updateResult.isFailure()) {
+      return {
+        success: false,
+        message: updateResult.failure?.message,
+      };
+    }
+
+    return {
+      success: true,
+      value: toUserResponse(updateResult.value!),
+    };
   }
 
   @Delete()
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(RolesGuard)
   @Roles('ADMIN')
-  delete(@Body() deleteUserDto: DeleteUserByEmailRequest): Promise<void> {
-    return this.DeleteUserByEmailUseCase.execute(deleteUserDto);
+  async delete(@Body() deleteUserDto: DeleteUserByEmailRequest) {
+    const deleteUserByEmailResult =
+      await this.DeleteUserByEmailUseCase.execute(deleteUserDto);
+
+    if (deleteUserByEmailResult.isFailure()) {
+      return {
+        success: false,
+        message: deleteUserByEmailResult.failure?.message,
+      };
+    }
+
+    return {
+      success: true,
+      value: null,
+    };
   }
 }

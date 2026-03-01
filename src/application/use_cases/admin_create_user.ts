@@ -3,14 +3,11 @@ import { User } from 'src/domain/entities/user.entity';
 import { UserFactory } from 'src/domain/entities/user.factory';
 import { UserAlreadyExistsError } from 'src/domain/exceptions/user.exceptions';
 import { ICryptoGateway } from '../interfaces/crypto_gateway';
-import { IUseCase } from '../interfaces/use_case';
 import { IUserRepository } from '../interfaces/user_repository';
 import { AdminCreateUserRequest } from '../dtos/admin_create_user_request';
 
 @Injectable()
-export class AdminCreateUserUseCase
-  implements IUseCase<AdminCreateUserRequest, User>
-{
+export class AdminCreateUserUseCase {
   constructor(
     @Inject('UserRepository')
     private readonly userRepository: IUserRepository,
