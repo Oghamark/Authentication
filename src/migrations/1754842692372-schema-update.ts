@@ -1,14 +1,14 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class SchemaUpdate1739836800000 implements MigrationInterface {
-  name = 'SchemaUpdate1739836800000';
+export class SchemaUpdate1754842692372 implements MigrationInterface {
+  name = 'SchemaUpdate1754842692372';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(
-      `ALTER TABLE "user_entity" ADD "role" character varying NOT NULL DEFAULT 'USER'`,
+      `ALTER TABLE "user_entity" ADD COLUMN IF NOT EXISTS "role" character varying NOT NULL DEFAULT 'USER'`,
     );
     await queryRunner.query(
-      `ALTER TABLE "user_entity" ADD CONSTRAINT "CHK_user_entity_role" CHECK ("role" IN ('USER', 'ADMIN'))`,
+      `ALTER TABLE "user_entity" ADD CONSTRAINT IF NOT EXISTS "CHK_user_entity_role" CHECK ("role" IN ('USER', 'ADMIN'))`,
     );
   }
 

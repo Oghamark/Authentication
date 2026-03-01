@@ -4,6 +4,9 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { UserEntity } from '../infrastructure/database/entities/user.entity';
 import { RefreshTokenEntity } from '../infrastructure/database/entities/refresh_token.entity';
 import { AuthConfigEntity } from '../infrastructure/database/entities/auth_config.entity';
+import { SchemaUpdate1754842692372 } from '../migrations/1754842692372-schema-update';
+import { SchemaUpdate1754842692371 } from '../migrations/1754842692371-schema-update';
+import { AuthConfig1772326398310 } from '../migrations/1772326398310-auth-config';
 
 @Module({
   imports: [
@@ -41,6 +44,13 @@ import { AuthConfigEntity } from '../infrastructure/database/entities/auth_confi
           password: password,
           database: database,
           entities: [UserEntity, RefreshTokenEntity, AuthConfigEntity],
+          migrations: [
+            SchemaUpdate1754842692371,
+            SchemaUpdate1754842692372,
+            AuthConfig1772326398310,
+          ],
+          migrationsRun: true,
+          migrationsTableName: 'migration_table',
           synchronize: !isProduction,
           logging: !isProduction,
         };
