@@ -3,6 +3,7 @@ import { ConfigModule } from '@nestjs/config';
 import { UsersModule } from './modules/user.module';
 import { TypeOrmConfigModule } from './modules/typeorm.module';
 import { AuthModule } from './modules/auth.module';
+import { AppConfigModule } from './modules/config.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { AuthModule } from './modules/auth.module';
     // Feature modules
     UsersModule,
     AuthModule,
+    AppConfigModule,
   ],
   controllers: [],
   providers: [],

@@ -3,6 +3,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { UserEntity } from '../infrastructure/database/entities/user.entity';
 import { RefreshTokenEntity } from '../infrastructure/database/entities/refresh_token.entity';
+import { AuthConfigEntity } from '../infrastructure/database/entities/auth_config.entity';
 
 @Module({
   imports: [
@@ -39,7 +40,7 @@ import { RefreshTokenEntity } from '../infrastructure/database/entities/refresh_
           username: username,
           password: password,
           database: database,
-          entities: [UserEntity, RefreshTokenEntity],
+          entities: [UserEntity, RefreshTokenEntity, AuthConfigEntity],
           synchronize: !isProduction,
           logging: !isProduction,
         };

@@ -1,4 +1,12 @@
-import { Body, Controller, Post, Req, Res, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  ForbiddenException,
+  Post,
+  Req,
+  Res,
+  UseGuards,
+} from '@nestjs/common';
 import { Request, Response } from 'express';
 import { LoginRequest } from 'src/application/dtos/login_request';
 import { AdminCreateUserRequest } from 'src/application/dtos/admin_create_user_request';
@@ -12,6 +20,7 @@ import { Roles } from 'src/infrastructure/decorators/roles.decorator';
 import { CreateUserUseCase } from '../../application/use_cases/create_user';
 import { CreateUserRequest } from '../../application/dtos/create_user_request';
 import { InvalidTokenError } from '../../domain/exceptions/auth.exceptions';
+import { GetAuthConfigUseCase } from '../../application/use_cases/get_auth_config';
 
 @Controller()
 export class AuthController {
@@ -21,6 +30,7 @@ export class AuthController {
     private readonly createUserUseCase: CreateUserUseCase,
     private readonly logoutUseCase: LogoutUseCase,
     private readonly adminCreateUserUseCase: AdminCreateUserUseCase,
+    private readonly getAuthConfigUseCase: GetAuthConfigUseCase,
   ) {}
 
   @Post('login')
@@ -75,6 +85,14 @@ export class AuthController {
     @Body() signUpDto: CreateUserRequest,
     @Res({ passthrough: true }) response: Response,
   ) {
+    const configResult = await this.getAuthConfigUseCase.execute();
+    if (
+      !configResult.isFailure() &&
+      configResult.value?.signupEnabled === false
+    ) {
+      throw new ForbiddenException('Registration is disabled');
+    }
+
     const createUserResult = await this.createUserUseCase.execute(signUpDto);
 
     if (createUserResult.isFailure()) {
