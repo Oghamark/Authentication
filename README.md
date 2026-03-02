@@ -4,7 +4,7 @@ A self-hosted JWT authentication service built with NestJS and TypeORM.
 
 ## Requirements
 
-- Node.js 20+
+- Node.js 20+ 
 - A PostgreSQL database called "authentication"
 
 ## Installation
