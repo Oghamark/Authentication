@@ -17,7 +17,6 @@ import { DeleteUserByEmailUseCase } from 'src/application/use_cases/delete_user_
 import { GetUserByIdRequest } from '../../application/dtos/get_user_by_id_request';
 import { CreateUserRequest } from '../../application/dtos/create_user_request';
 import { UpdateUserRequest } from '../../application/dtos/update_user_request';
-import { UpdateUserRoleRequest } from '../../application/dtos/update_user_role_request';
 import { DeleteUserByEmailRequest } from '../../application/dtos/delete_user_by_email_request';
 import { JwtAuthGuard } from '../../infrastructure/guards/jwt_auth.guard';
 import { RolesGuard } from '../../infrastructure/guards/roles.guard';
