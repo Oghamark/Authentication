@@ -16,6 +16,7 @@ import { AdminCreateUserUseCase } from '../application/use_cases/admin_create_us
 import { AuthConfigEntity } from '../infrastructure/database/entities/auth_config.entity';
 import { TypeOrmAuthConfigRepository } from '../infrastructure/repositories/auth_config_repository';
 import { GetAuthConfigUseCase } from '../application/use_cases/get_auth_config';
+import { UpdateAuthConfigUseCase } from '../application/use_cases/update_auth_config';
 
 @Module({
   imports: [
@@ -55,12 +56,14 @@ import { GetAuthConfigUseCase } from '../application/use_cases/get_auth_config';
     LogoutUseCase,
     RefreshTokenUseCase,
     GetAuthConfigUseCase,
+    UpdateAuthConfigUseCase,
   ],
   exports: [
     'RefreshTokenRepository',
     'UserRepository',
     'TokenGateway',
     'CryptoGateway',
+    'AuthConfigRepository',
   ],
 })
 export class AuthModule {}

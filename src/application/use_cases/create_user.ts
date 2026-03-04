@@ -58,3 +58,4 @@ export class CreateUserUseCase implements IUseCase<CreateUserRequest, User> {
     return Result.ok(user);
   }
 }
+

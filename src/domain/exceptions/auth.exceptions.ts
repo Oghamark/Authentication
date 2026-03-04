@@ -34,3 +34,10 @@ export class RefreshTokenRevokedError extends DomainException {
     this.name = 'RefreshTokenRevokedError';
   }
 }
+
+export class SignupDisabledError extends DomainException {
+  constructor() {
+    super('Public signup is currently disabled');
+    this.name = 'SignupDisabledError';
+  }
+}

@@ -15,7 +15,7 @@ export default new DataSource({
   logging: false,
   logger: 'file',
   entities: ['dist/**/*.entity{.ts,.js}'],
-  migrations: ['src/migrations/**/*.ts'],
-  subscribers: ['src/subscriber/**/*.ts'],
+  migrations: ['dist/migrations/**/*.js'],
+  subscribers: ['dist/subscriber/**/*.js'],
   migrationsTableName: 'migration_table',
 });

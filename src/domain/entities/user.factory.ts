@@ -30,7 +30,7 @@ export class UserFactory {
     email,
     password,
     role,
-  }: Required<User>): User {
+  }: Pick<User, 'id' | 'name' | 'email' | 'password' | 'role'>): User {
     if (!id || !name || !email || !password || !role) {
       throw new Error('All fields are required to reconstitute a user');
     }

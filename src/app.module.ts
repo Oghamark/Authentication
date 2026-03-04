@@ -4,6 +4,7 @@ import { UsersModule } from './modules/user.module';
 import { TypeOrmConfigModule } from './modules/typeorm.module';
 import { AuthModule } from './modules/auth.module';
 import { AppConfigModule } from './modules/config.module';
+import { HealthModule } from './modules/health.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { AppConfigModule } from './modules/config.module';
     UsersModule,
     AuthModule,
     AppConfigModule,
+    HealthModule,
   ],
   controllers: [],
   providers: [],

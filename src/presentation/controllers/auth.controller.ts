@@ -1,12 +1,4 @@
-import {
-  Body,
-  Controller,
-  ForbiddenException,
-  Post,
-  Req,
-  Res,
-  UseGuards,
-} from '@nestjs/common';
+import { Body, Controller, ForbiddenException, Get, Patch, Post, Req, Res, UseGuards } from '@nestjs/common';
 import { Request, Response } from 'express';
 import { LoginRequest } from 'src/application/dtos/login_request';
 import { AdminCreateUserRequest } from 'src/application/dtos/admin_create_user_request';
@@ -21,6 +13,8 @@ import { CreateUserUseCase } from '../../application/use_cases/create_user';
 import { CreateUserRequest } from '../../application/dtos/create_user_request';
 import { InvalidTokenError } from '../../domain/exceptions/auth.exceptions';
 import { GetAuthConfigUseCase } from '../../application/use_cases/get_auth_config';
+import { UpdateAuthConfigUseCase } from '../../application/use_cases/update_auth_config';
+import { UpdateAuthConfigRequest } from '../../application/dtos/update_auth_config_request';
 
 @Controller()
 export class AuthController {
@@ -31,6 +25,7 @@ export class AuthController {
     private readonly logoutUseCase: LogoutUseCase,
     private readonly adminCreateUserUseCase: AdminCreateUserUseCase,
     private readonly getAuthConfigUseCase: GetAuthConfigUseCase,
+    private readonly updateAuthConfigUseCase: UpdateAuthConfigUseCase,
   ) {}
 
   @Post('login')
@@ -219,6 +214,26 @@ export class AuthController {
       id: user.id,
       name: user.name,
       email: user.email,
+    };
+  }
+
+  @Get('config')
+  async getAuthConfig() {
+    const config = await this.getAuthConfigUseCase.execute();
+    return {
+      success: true,
+      value: config,
+    };
+  }
+
+  @Patch('config')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
+  async updateAuthConfig(@Body() dto: UpdateAuthConfigRequest) {
+    await this.updateAuthConfigUseCase.execute(dto);
+    return {
+      success: true,
+      value: { signupEnabled: dto.signupEnabled },
     };
   }
 }
