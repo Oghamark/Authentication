@@ -7,6 +7,7 @@ import {
 } from 'src/domain/exceptions/user.exceptions';
 import { IUseCase } from '../interfaces/use_case';
 import { UpdateUserRoleRequest } from '../dtos/update_user_role_request';
+import { Result } from '../../core/result';
 
 @Injectable()
 export class UpdateUserRoleUseCase
@@ -21,21 +22,22 @@ export class UpdateUserRoleUseCase
     id,
     authenticatedUserId,
     role,
-  }: UpdateUserRoleRequest): Promise<User> {
+  }: UpdateUserRoleRequest): Promise<Result<User>> {
     try {
       if (id === authenticatedUserId) {
         throw new CannotModifyOwnRoleError();
       }
 
-      const user: User | null = await this.userRepository.findById(id);
-      if (!user) {
+      const findUserResult = await this.userRepository.findById(id);
+      if (findUserResult.isFailure()) {
         throw new UserNotFoundError(id);
       }
 
+      const user = findUserResult.value!;
       user.role = role;
 
       await this.userRepository.update(user);
-      return user;
+      return Result.ok(user);
     } catch (error) {
       if (
         error instanceof CannotModifyOwnRoleError ||
