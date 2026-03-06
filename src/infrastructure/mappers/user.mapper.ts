@@ -24,7 +24,6 @@ export class UserMapper {
   }
 
   static toDomainList(userEntities: UserEntity[]): User[] {
-    // eslint-disable-next-line @typescript-eslint/unbound-method
-    return userEntities.map(UserMapper.toDomain);
+    return userEntities.map((user) => UserMapper.toDomain(user));
   }
 }

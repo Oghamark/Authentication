@@ -1,10 +1,10 @@
 import { User } from 'src/domain/entities/user.entity';
-import { IUserRepository } from '../interfaces/user_repository';
+import { IUserRepository } from 'src/application/interfaces/user_repository';
 import { Inject, Injectable } from '@nestjs/common';
 import { UserNotFoundError } from 'src/domain/exceptions/user.exceptions';
-import { IUseCase } from '../interfaces/use_case';
-import { UpdateUserRequest } from '../dtos/update_user_request';
-import { Result } from '../../core/result';
+import { IUseCase } from 'src/application/interfaces/use_case';
+import { UpdateUserRequest } from 'src/application/dtos/user/update_user_request';
+import { Result } from 'src/core/result';
 
 @Injectable()
 export class UpdateUserUseCase implements IUseCase<UpdateUserRequest, User> {

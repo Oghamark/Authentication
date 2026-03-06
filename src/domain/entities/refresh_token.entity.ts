@@ -2,13 +2,13 @@ import { randomUUID } from 'crypto';
 
 export class RefreshToken {
   constructor(
-    private readonly _id: string,
-    private readonly _userId: string,
-    private readonly _tokenHash: string, // Hash of the refresh token
-    private readonly _expiresAt: Date,
-    private readonly _createdAt: Date,
-    private _isRevoked: boolean = false,
-    private _revokedAt?: Date,
+    public readonly id: string,
+    public readonly userId: string,
+    public readonly tokenHash: string,
+    public readonly expiresAt: Date,
+    public readonly createdAt: Date,
+    public isRevoked: boolean = false,
+    public revokedAt?: Date,
   ) {}
 
   static create(data: {
@@ -44,38 +44,5 @@ export class RefreshToken {
       data.isRevoked || false,
       data.revokedAt,
     );
-  }
-
-  revoke(): void {
-    this._isRevoked = true;
-    this._revokedAt = new Date();
-  }
-
-  isValid(): boolean {
-    return !this._isRevoked && new Date() < this._expiresAt;
-  }
-
-  isExpired(): boolean {
-    return new Date() > this._expiresAt;
-  }
-
-  // Getters
-  get id(): string {
-    return this._id;
-  }
-  get userId(): string {
-    return this._userId;
-  }
-  get tokenHash(): string {
-    return this._tokenHash;
-  }
-  get createdAt(): Date {
-    return this._createdAt;
-  }
-  get expiresAt(): Date {
-    return this._expiresAt;
-  }
-  get isRevoked(): boolean {
-    return this._isRevoked;
   }
 }

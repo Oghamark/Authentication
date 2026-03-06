@@ -5,8 +5,8 @@ import { UserEntity } from 'src/infrastructure/database/entities/user.entity';
 import { Repository } from 'typeorm';
 import { UserMapper } from '../mappers/user.mapper';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Result } from '../../core/result';
-import { GenericFailure } from '../../core/failure';
+import { Result } from 'src/core/result';
+import { UserNotFoundFailure } from 'src/domain/failures/user_failures';
 
 @Injectable()
 export class TypeOrmUserRepository implements IUserRepository {
@@ -28,13 +28,13 @@ export class TypeOrmUserRepository implements IUserRepository {
     return Result.ok(users);
   }
 
-  async update(entity: User): Promise<Result<void>> {
+  async update(entity: User): Promise<Result> {
     const userEntity = UserMapper.toPersistence(entity);
     await this._repository.save(userEntity);
     return Result.ok();
   }
 
-  async delete(id: string): Promise<Result<void>> {
+  async delete(id: string): Promise<Result> {
     await this._repository.delete(id);
     return Result.ok();
   }
@@ -54,7 +54,7 @@ export class TypeOrmUserRepository implements IUserRepository {
     const userEntity = await this._repository.findOne({ where: { email } });
 
     if (!userEntity) {
-      return Result.fail(new GenericFailure('User not found'));
+      return Result.fail(new UserNotFoundFailure());
     }
     const user = UserMapper.toDomain(userEntity);
     return Result.ok(user);
@@ -64,7 +64,7 @@ export class TypeOrmUserRepository implements IUserRepository {
     const userEntity = await this._repository.findOne({ where: { name } });
 
     if (!userEntity) {
-      return Result.fail(new GenericFailure('User not found'));
+      return Result.fail(new UserNotFoundFailure());
     }
 
     const user = UserMapper.toDomain(userEntity);
@@ -75,7 +75,7 @@ export class TypeOrmUserRepository implements IUserRepository {
     const userEntity = await this._repository.findOne({ where: { id } });
 
     if (!userEntity) {
-      return Result.fail(new GenericFailure('User not found'));
+      return Result.fail(new UserNotFoundFailure());
     }
 
     const user = UserMapper.toDomain(userEntity);

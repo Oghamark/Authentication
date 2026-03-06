@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { IAuthConfigRepository } from '../../application/interfaces/auth_config_repository';
+import { IAuthConfigRepository } from 'src/application/interfaces/auth_config_repository';
 import { AuthConfigEntity } from '../database/entities/auth_config.entity';
-import { Result } from '../../core/result';
+import { Result } from 'src/core/result';
 
 const DEFAULT_ID = 'default';
 

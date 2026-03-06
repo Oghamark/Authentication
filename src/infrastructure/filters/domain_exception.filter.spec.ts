@@ -4,13 +4,13 @@ import {
   UserAlreadyExistsError,
   UserNotFoundError,
   UserWithEmailNotFoundError,
-} from '../../domain/exceptions/user.exceptions';
+} from 'src/domain/exceptions/user.exceptions';
 import { HttpStatus, Logger } from '@nestjs/common';
 import {
   InvalidCredentialsError,
   PasswordsDontMatchException,
   SignupDisabledError,
-} from '../../domain/exceptions/auth.exceptions';
+} from 'src/domain/exceptions/auth.exceptions';
 
 const mockAppLoggerService = {
   log: jest.fn(),

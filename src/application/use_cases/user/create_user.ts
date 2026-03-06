@@ -1,13 +1,13 @@
 import { User } from 'src/domain/entities/user.entity';
-import { IUserRepository } from '../interfaces/user_repository';
+import { IUserRepository } from 'src/application/interfaces/user_repository';
 import { UserFactory } from 'src/domain/entities/user.factory';
-import { IUseCase } from '../interfaces/use_case';
+import { IUseCase } from 'src/application/interfaces/use_case';
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { ICryptoGateway } from '../interfaces/crypto_gateway';
+import { ICryptoGateway } from 'src/application/interfaces/crypto_gateway';
 import { UserAlreadyExistsError } from 'src/domain/exceptions/user.exceptions';
-import { CreateUserRequest } from '../dtos/create_user_request';
-import { PasswordsDontMatchException } from '../../domain/exceptions/auth.exceptions';
-import { Result } from '../../core/result';
+import { CreateUserRequest } from 'src/application/dtos/user/create_user_request';
+import { PasswordsDontMatchException } from 'src/domain/exceptions/auth.exceptions';
+import { Result } from 'src/core/result';
 
 @Injectable()
 export class CreateUserUseCase implements IUseCase<CreateUserRequest, User> {

@@ -1,8 +1,8 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { IUserRepository } from '../interfaces/user_repository';
-import { IUseCase } from '../interfaces/use_case';
-import { User } from '../../domain/entities/user.entity';
-import { GetUsersRequest } from '../dtos/get_users_request';
+import { IUserRepository } from 'src/application/interfaces/user_repository';
+import { IUseCase } from 'src/application/interfaces/use_case';
+import { User } from 'src/domain/entities/user.entity';
+import { GetUsersRequest } from 'src/application/dtos/user/get_users_request';
 
 @Injectable()
 export class GetUsersUseCase implements IUseCase<GetUsersRequest, User[]> {

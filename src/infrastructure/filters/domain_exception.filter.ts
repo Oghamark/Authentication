@@ -6,19 +6,19 @@ import {
   Logger,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
-import { DomainException } from '../../domain/exceptions/domain_exception';
+import { DomainException } from 'src/domain/exceptions/domain_exception';
 import {
   InvalidCredentialsError,
   InvalidTokenError,
   PasswordsDontMatchException,
   SignupDisabledError,
-} from '../../domain/exceptions/auth.exceptions';
+} from 'src/domain/exceptions/auth.exceptions';
 import {
   UserAlreadyExistsError,
   CannotModifyOwnRoleError,
   UserNotFoundError,
   UserWithEmailNotFoundError,
-} from '../../domain/exceptions/user.exceptions';
+} from 'src/domain/exceptions/user.exceptions';
 
 @Catch(DomainException)
 export class DomainExceptionFilter implements ExceptionFilter {

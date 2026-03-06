@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { IAuthConfigRepository } from '../interfaces/auth_config_repository';
-import { Result } from '../../core/result';
+import { IAuthConfigRepository } from 'src/application/interfaces/auth_config_repository';
+import { Result } from 'src/core/result';
 
 @Injectable()
 export class GetAuthConfigUseCase {

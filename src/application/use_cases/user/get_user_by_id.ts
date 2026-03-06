@@ -1,9 +1,9 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { IUserRepository } from '../interfaces/user_repository';
+import { IUserRepository } from 'src/application/interfaces/user_repository';
 import { UserNotFoundError } from 'src/domain/exceptions/user.exceptions';
-import { IUseCase } from '../interfaces/use_case';
-import { User } from '../../domain/entities/user.entity';
-import { GetUserByIdRequest } from '../dtos/get_user_by_id_request';
+import { IUseCase } from 'src/application/interfaces/use_case';
+import { User } from 'src/domain/entities/user.entity';
+import { GetUserByIdRequest } from 'src/application/dtos/user/get_user_by_id_request';
 
 @Injectable()
 export class GetUserByIdUseCase implements IUseCase<GetUserByIdRequest, User> {

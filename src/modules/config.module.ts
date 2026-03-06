@@ -3,10 +3,9 @@ import { JwtService } from '@nestjs/jwt';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthConfigEntity } from '../infrastructure/database/entities/auth_config.entity';
 import { TypeOrmAuthConfigRepository } from '../infrastructure/repositories/auth_config_repository';
-import { GetAuthConfigUseCase } from '../application/use_cases/get_auth_config';
-import { UpdateAuthConfigUseCase } from '../application/use_cases/update_auth_config';
+import { GetAuthConfigUseCase } from 'src/application/use_cases/config/get_auth_config';
+import { UpdateAuthConfigUseCase } from 'src/application/use_cases/config/update_auth_config';
 import { ConfigController } from '../presentation/controllers/config.controller';
-import { JwtTokenGateway } from '../infrastructure/gateways/jwt_token.gateway';
 import { BcryptCryptoGateway } from '../infrastructure/gateways/bcrypt_crypto.gateway';
 
 @Module({
@@ -16,10 +15,6 @@ import { BcryptCryptoGateway } from '../infrastructure/gateways/bcrypt_crypto.ga
     {
       provide: 'AuthConfigRepository',
       useClass: TypeOrmAuthConfigRepository,
-    },
-    {
-      provide: 'TokenGateway',
-      useClass: JwtTokenGateway,
     },
     {
       provide: 'CryptoGateway',

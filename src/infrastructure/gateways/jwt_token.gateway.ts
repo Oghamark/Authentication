@@ -1,95 +1,28 @@
-import { randomUUID } from 'crypto';
-import { Inject, Injectable } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
+import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { ICryptoGateway } from 'src/application/interfaces/crypto_gateway';
 import { ITokenGateway } from 'src/application/interfaces/token_gateway';
-import {
-  InvalidTokenError,
-  TokenExpiredError,
-} from 'src/domain/exceptions/auth.exceptions';
 import { JwtPayload } from 'src/domain/value_objects/jwt_payload';
+import { instanceToPlain } from 'class-transformer';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class JwtTokenGateway implements ITokenGateway {
   constructor(
-    private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
-    @Inject('CryptoGateway')
-    private readonly cryptoGateway: ICryptoGateway,
+    private readonly jwtService: JwtService,
   ) {}
 
-  async generateAccessToken(payload: JwtPayload): Promise<string> {
-    return this.jwtService.signAsync(payload.toPlainObject(), {
-      secret: this.configService.get('JWT_ACCESS_SECRET'),
-      issuer: this.configService.get('JWT_ISSUER', 'auth-service'),
+  generateAccessToken(payload: JwtPayload): string {
+    return this.jwtService.sign(instanceToPlain(payload), {
+      secret: this.configService.get<string>('JWT_ACCESS_SECRET'),
+      expiresIn: '15m',
     });
   }
 
-  async generateRefreshToken(
-    userId: string,
-  ): Promise<{ token: string; tokenHash: string; expiresAt: Date }> {
-    const payload = {
-      sub: userId,
-      type: 'refresh',
-      jti: randomUUID(),
-    };
-
-    const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + 30); // 30 days
-
-    const token = await this.jwtService.signAsync(payload, {
-      secret: this.configService.get('JWT_REFRESH_SECRET'),
+  generateRefreshToken(payload: JwtPayload): string {
+    return this.jwtService.sign(instanceToPlain(payload), {
+      secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
+      expiresIn: '7d',
     });
-
-    // Hash the token for storage
-    const tokenHash = await this.cryptoGateway.hash(token);
-
-    return { token, tokenHash, expiresAt };
-  }
-
-  async verifyAccessToken(token: string): Promise<JwtPayload> {
-    try {
-      const payload: Record<string, any> = await this.jwtService.verifyAsync(
-        token,
-        {
-          secret: this.configService.get('JWT_ACCESS_SECRET'),
-        },
-      );
-
-      return JwtPayload.fromPlainObject(payload);
-    } catch (error) {
-      if (error instanceof TokenExpiredError) {
-        throw new TokenExpiredError();
-      }
-      throw new InvalidTokenError();
-    }
-  }
-
-  async verifyRefreshToken(
-    token: string,
-  ): Promise<{ userId: string; token: string }> {
-    try {
-      const payload: Record<string, any> = await this.jwtService.verifyAsync(
-        token,
-        {
-          secret: this.configService.get('JWT_REFRESH_SECRET'),
-        },
-      );
-
-      if (payload.type !== 'refresh') {
-        throw new InvalidTokenError('Not a refresh token');
-      }
-
-      return {
-        userId: payload.sub as string,
-        token,
-      };
-    } catch (error) {
-      if (error instanceof TokenExpiredError) {
-        throw new TokenExpiredError();
-      }
-      throw new InvalidTokenError();
-    }
   }
 }

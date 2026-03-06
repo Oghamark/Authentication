@@ -1,4 +1,4 @@
-import { Result } from '../../core/result';
+import { Result } from 'src/core/result';
 
 export interface IAuthConfigRepository {
   get(): Promise<Result<{ signupEnabled: boolean }>>;

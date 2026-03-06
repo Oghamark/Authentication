@@ -6,8 +6,8 @@ import { RefreshTokenEntity } from '../database/entities/refresh_token.entity';
 import { RefreshToken } from 'src/domain/entities/refresh_token.entity';
 import { RefreshTokenMapper } from '../mappers/refresh_token.mapper';
 import { ICryptoGateway } from 'src/application/interfaces/crypto_gateway';
-import { Result } from '../../core/result';
-import { GenericFailure } from '../../core/failure';
+import { Result } from 'src/core/result';
+import { GenericFailure } from 'src/core/failure';
 
 @Injectable()
 export class TypeOrmRefreshTokenRepository implements IRefreshTokenRepository {
@@ -44,22 +44,22 @@ export class TypeOrmRefreshTokenRepository implements IRefreshTokenRepository {
     return Result.fail(new GenericFailure('Token not found'));
   }
 
-  async save(refreshToken: RefreshToken): Promise<Result<void>> {
+  async save(refreshToken: RefreshToken): Promise<Result> {
     const entity = RefreshTokenMapper.toPersistence(refreshToken);
     await this.repository.save(entity);
     return Result.ok();
   }
-  async revokeByTokenHash(tokenHash: string): Promise<Result<void>> {
+  async revokeByTokenHash(tokenHash: string): Promise<Result> {
     await this.repository.delete({ tokenHash: tokenHash });
     return Result.ok();
   }
 
-  async revokeAllByUserId(userId: string): Promise<Result<void>> {
+  async revokeAllByUserId(userId: string): Promise<Result> {
     await this.repository.delete({ userId });
     return Result.ok();
   }
 
-  async deleteExpiredTokens(): Promise<Result<void>> {
+  async deleteExpiredTokens(): Promise<Result> {
     await this.repository.delete({ expiresAt: LessThan(new Date()) });
     return Result.ok();
   }

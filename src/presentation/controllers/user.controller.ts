@@ -7,24 +7,26 @@ import {
   Patch,
   Post,
   UseGuards,
+  Request,
 } from '@nestjs/common';
-import { CreateUserUseCase } from 'src/application/use_cases/create_user';
-import { UpdateUserUseCase } from 'src/application/use_cases/update_user';
-import { UpdateUserRoleUseCase } from 'src/application/use_cases/update_user_role';
-import { GetUsersUseCase } from 'src/application/use_cases/get_users';
-import { GetUserByIdUseCase } from 'src/application/use_cases/get_user_by_id';
-import { DeleteUserByEmailUseCase } from 'src/application/use_cases/delete_user_by_email';
-import { GetUserByIdRequest } from '../../application/dtos/get_user_by_id_request';
-import { CreateUserRequest } from '../../application/dtos/create_user_request';
-import { UpdateUserRequest } from '../../application/dtos/update_user_request';
-import { DeleteUserByEmailRequest } from '../../application/dtos/delete_user_by_email_request';
-import { JwtAuthGuard } from '../../infrastructure/guards/jwt_auth.guard';
-import { RolesGuard } from '../../infrastructure/guards/roles.guard';
-import { Roles } from '../../infrastructure/decorators/roles.decorator';
-import { toUserResponse } from '../../application/dtos/user_response';
+import { CreateUserUseCase } from 'src/application/use_cases/user/create_user';
+import { UpdateUserUseCase } from 'src/application/use_cases/user/update_user';
+import { UpdateUserRoleUseCase } from 'src/application/use_cases/user/update_user_role';
+import { GetUsersUseCase } from 'src/application/use_cases/user/get_users';
+import { GetUserByIdUseCase } from 'src/application/use_cases/user/get_user_by_id';
+import { DeleteUserByEmailUseCase } from 'src/application/use_cases/user/delete_user_by_email';
+import { GetUserByIdRequest } from 'src/application/dtos/user/get_user_by_id_request';
+import { CreateUserRequest } from 'src/application/dtos/user/create_user_request';
+import { UpdateUserRequest } from 'src/application/dtos/user/update_user_request';
+import { DeleteUserByEmailRequest } from 'src/application/dtos/user/delete_user_by_email_request';
+import { RolesGuard } from 'src/infrastructure/guards/roles.guard';
+import { Roles } from 'src/infrastructure/decorators/roles.decorator';
+import { toUserResponse } from 'src/application/dtos/user/user_response';
+import { AuthenticatedRequest } from 'src/application/dtos/auth/authenticated_request';
+import { JwtAuthGuard } from 'src/infrastructure/guards/jwt_auth.guard';
 
 @Controller('users')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class UserController {
   constructor(
     private readonly CreateUserUseCase: CreateUserUseCase,
@@ -36,7 +38,6 @@ export class UserController {
   ) {}
 
   @Get()
-  @UseGuards(RolesGuard)
   @Roles('ADMIN')
   async findAll() {
     const getUsersResult = await this.GetUsersUseCase.execute();
@@ -72,7 +73,6 @@ export class UserController {
   }
 
   @Post()
-  @UseGuards(RolesGuard)
   @Roles('ADMIN')
   async create(@Body() createUserDto: CreateUserRequest) {
     const createUserResult =
@@ -92,7 +92,6 @@ export class UserController {
   }
 
   @Post(':id')
-  @UseGuards(RolesGuard)
   @Roles('ADMIN')
   async update(
     @Param() params: { id: string },
@@ -117,16 +116,17 @@ export class UserController {
   }
 
   @Patch(':id/role')
-  @UseGuards(RolesGuard)
   @Roles('ADMIN')
   async updateRole(
+    @Request() req: AuthenticatedRequest,
     @Param() params: { id: string },
     @Body() body: { role: string },
   ) {
-    const updateResult = await this.UpdateUserUseCase.execute({
+    const updateResult = await this.UpdateUserRoleUseCase.execute({
       id: params.id,
       role: body.role,
-    } as UpdateUserRequest);
+      authenticatedUserId: req.user.id, // Replace with actual authenticated user ID
+    });
 
     if (updateResult.isFailure()) {
       return {
@@ -142,7 +142,6 @@ export class UserController {
   }
 
   @Delete()
-  @UseGuards(RolesGuard)
   @Roles('ADMIN')
   async delete(@Body() deleteUserDto: DeleteUserByEmailRequest) {
     const deleteUserByEmailResult =

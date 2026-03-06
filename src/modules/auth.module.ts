@@ -1,28 +1,43 @@
 import { Module } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { LoginUseCase } from 'src/application/use_cases/login.use_case';
-import { LogoutUseCase } from 'src/application/use_cases/logout.use_case';
-import { RefreshTokenUseCase } from 'src/application/use_cases/refresh_token.use_case';
 import { RefreshTokenEntity } from 'src/infrastructure/database/entities/refresh_token.entity';
 import { UserEntity } from 'src/infrastructure/database/entities/user.entity';
 import { BcryptCryptoGateway } from 'src/infrastructure/gateways/bcrypt_crypto.gateway';
-import { JwtTokenGateway } from 'src/infrastructure/gateways/jwt_token.gateway';
 import { TypeOrmRefreshTokenRepository } from 'src/infrastructure/repositories/refresh_token_repository';
 import { TypeOrmUserRepository } from 'src/infrastructure/repositories/user_repository';
-import { AuthController } from 'src/presentation/controllers/auth.controller';
-import { CreateUserUseCase } from '../application/use_cases/create_user';
-import { AdminCreateUserUseCase } from '../application/use_cases/admin_create_user';
 import { AuthConfigEntity } from '../infrastructure/database/entities/auth_config.entity';
 import { TypeOrmAuthConfigRepository } from '../infrastructure/repositories/auth_config_repository';
-import { GetAuthConfigUseCase } from '../application/use_cases/get_auth_config';
-import { UpdateAuthConfigUseCase } from '../application/use_cases/update_auth_config';
+import { PassportModule } from '@nestjs/passport';
+import { LocalStrategy } from 'src/infrastructure/strategies/local.strategy';
+import { JwtTokenGateway } from 'src/infrastructure/gateways/jwt_token.gateway';
+import { JwtModule } from '@nestjs/jwt';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { AuthController } from 'src/presentation/controllers/auth.controller';
+import { LoginUseCase } from 'src/application/use_cases/auth/login';
+import {
+  JwtAccessTokenStrategy,
+  JwtRefreshTokenStrategy,
+} from 'src/infrastructure/strategies/jwt.strategy';
+import { ValidateUserUseCase } from 'src/application/use_cases/auth/validate_user';
+import { VerifyRefreshTokenUseCase } from 'src/application/use_cases/auth/verify_refresh_token';
+import { CreateUserUseCase } from 'src/application/use_cases/user/create_user';
+import { GetAuthConfigUseCase } from 'src/application/use_cases/config/get_auth_config';
+import { LogoutUseCase } from 'src/application/use_cases/auth/logout';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([UserEntity]),
     TypeOrmModule.forFeature([RefreshTokenEntity]),
     TypeOrmModule.forFeature([AuthConfigEntity]),
+    PassportModule,
+    JwtModule.registerAsync({
+      imports: [ConfigModule],
+      useFactory: (configService: ConfigService) => ({
+        secret: configService.get('JWT_ACCESS_SECRET'),
+        signOptions: { expiresIn: '1h' },
+      }),
+      inject: [ConfigService],
+    }),
   ],
   controllers: [AuthController],
   providers: [
@@ -35,10 +50,6 @@ import { UpdateAuthConfigUseCase } from '../application/use_cases/update_auth_co
       useClass: TypeOrmUserRepository,
     },
     {
-      provide: 'TokenGateway',
-      useClass: JwtTokenGateway,
-    },
-    {
       provide: 'CryptoGateway',
       useClass: BcryptCryptoGateway,
     },
@@ -46,17 +57,22 @@ import { UpdateAuthConfigUseCase } from '../application/use_cases/update_auth_co
       provide: 'AuthConfigRepository',
       useClass: TypeOrmAuthConfigRepository,
     },
+    {
+      provide: 'TokenGateway',
+      useClass: JwtTokenGateway,
+    },
 
-    JwtService,
+    LocalStrategy,
+    JwtAccessTokenStrategy,
+    JwtRefreshTokenStrategy,
 
     // Use cases
-    AdminCreateUserUseCase,
     CreateUserUseCase,
+    GetAuthConfigUseCase,
     LoginUseCase,
     LogoutUseCase,
-    RefreshTokenUseCase,
-    GetAuthConfigUseCase,
-    UpdateAuthConfigUseCase,
+    ValidateUserUseCase,
+    VerifyRefreshTokenUseCase,
   ],
   exports: [
     'RefreshTokenRepository',

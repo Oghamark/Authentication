@@ -1,11 +1,12 @@
 import { Body, Controller, Get, Patch, UseGuards } from '@nestjs/common';
-import { GetAuthConfigUseCase } from '../../application/use_cases/get_auth_config';
-import { UpdateAuthConfigUseCase } from '../../application/use_cases/update_auth_config';
-import { JwtAuthGuard } from '../../infrastructure/guards/jwt_auth.guard';
-import { RolesGuard } from '../../infrastructure/guards/roles.guard';
-import { Roles } from '../../infrastructure/decorators/roles.decorator';
+import { GetAuthConfigUseCase } from 'src/application/use_cases/config/get_auth_config';
+import { UpdateAuthConfigUseCase } from 'src/application/use_cases/config/update_auth_config';
+import { RolesGuard } from 'src/infrastructure/guards/roles.guard';
+import { Roles } from 'src/infrastructure/decorators/roles.decorator';
+import { JwtAuthGuard } from 'src/infrastructure/guards/jwt_auth.guard';
 
 @Controller('config')
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class ConfigController {
   constructor(
     private readonly getAuthConfigUseCase: GetAuthConfigUseCase,
@@ -13,6 +14,7 @@ export class ConfigController {
   ) {}
 
   @Get()
+  @Roles('ADMIN')
   async getConfig() {
     const result = await this.getAuthConfigUseCase.execute();
 
@@ -24,7 +26,6 @@ export class ConfigController {
   }
 
   @Patch()
-  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')
   async updateConfig(@Body() body: { signupEnabled?: boolean }) {
     const result = await this.updateAuthConfigUseCase.execute(body);

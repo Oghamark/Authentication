@@ -1,224 +1,160 @@
 import {
-  Body,
   Controller,
-  ForbiddenException,
+  Request,
   Post,
-  Req,
-  Res,
   UseGuards,
+  UnauthorizedException,
+  Body,
+  Res,
+  InternalServerErrorException,
+  Req,
 } from '@nestjs/common';
-import { Request, Response } from 'express';
-import { LoginRequest } from 'src/application/dtos/login_request';
-import { AdminCreateUserRequest } from 'src/application/dtos/admin_create_user_request';
-import { LoginUseCase } from 'src/application/use_cases/login.use_case';
-import { LogoutUseCase } from 'src/application/use_cases/logout.use_case';
-import { RefreshTokenUseCase } from 'src/application/use_cases/refresh_token.use_case';
-import { AdminCreateUserUseCase } from 'src/application/use_cases/admin_create_user';
-import { JwtAuthGuard } from 'src/infrastructure/guards/jwt_auth.guard';
-import { RolesGuard } from 'src/infrastructure/guards/roles.guard';
-import { Roles } from 'src/infrastructure/decorators/roles.decorator';
-import { CreateUserUseCase } from '../../application/use_cases/create_user';
-import { CreateUserRequest } from '../../application/dtos/create_user_request';
-import { InvalidTokenError } from '../../domain/exceptions/auth.exceptions';
-import { GetAuthConfigUseCase } from '../../application/use_cases/get_auth_config';
+import { LoginUseCase } from 'src/application/use_cases/auth/login';
+import { AuthenticatedRequest } from 'src/application/dtos/auth/authenticated_request';
+import { CreateUserRequest } from 'src/application/dtos/user/create_user_request';
+import { GetAuthConfigUseCase } from 'src/application/use_cases/config/get_auth_config';
+import { CreateUserUseCase } from 'src/application/use_cases/user/create_user';
+import { toUserResponse } from 'src/application/dtos/user/user_response';
+import { JwtRefreshAuthGuard } from 'src/infrastructure/guards/jwt_auth.guard';
+import { Response } from 'express';
+import { LogoutUseCase } from 'src/application/use_cases/auth/logout';
+import { LocalAuthGuard } from 'src/infrastructure/guards/local_auth.guard';
 
 @Controller()
 export class AuthController {
   constructor(
-    private readonly loginUseCase: LoginUseCase,
-    private readonly refreshTokenUseCase: RefreshTokenUseCase,
-    private readonly createUserUseCase: CreateUserUseCase,
-    private readonly logoutUseCase: LogoutUseCase,
-    private readonly adminCreateUserUseCase: AdminCreateUserUseCase,
-    private readonly getAuthConfigUseCase: GetAuthConfigUseCase,
+    private createUserUseCase: CreateUserUseCase,
+    private loginUseCase: LoginUseCase,
+    private getAuthConfigUseCase: GetAuthConfigUseCase,
+    private logoutUseCase: LogoutUseCase,
   ) {}
 
+  @UseGuards(LocalAuthGuard)
   @Post('login')
   async login(
-    @Body() loginDto: LoginRequest,
+    @Request() request: AuthenticatedRequest,
     @Res({ passthrough: true }) response: Response,
   ) {
-    const result = await this.loginUseCase.execute({
-      email: loginDto.email,
-      password: loginDto.password,
-    });
-
-    if (result.isFailure()) {
-      return {
-        success: false,
-      };
-    }
-
-    // Set refresh token as httpOnly cookie (only if provided)
-    if (result.value?.refreshToken) {
-      response.cookie('refresh_token', result.value?.refreshToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
-        maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
-        path: '/auth/refresh', // Only send to refresh endpoint
-      });
-    }
-
-    if (result.value?.accessToken) {
-      response.cookie('access_token', result.value?.accessToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
-        maxAge: 30 * 24 * 60 * 60 * 1000,
-        path: '/',
-      });
-    }
-
-    return {
-      success: true,
-      value: {
-        accessToken: result.value?.accessToken,
-        userId: result.value?.userId,
-        expiresAt: result.value?.expiresAt,
-      },
-    };
+    return await this.handleLogin(request, response);
   }
 
   @Post('sign-up')
-  async signUp(
-    @Body() signUpDto: CreateUserRequest,
-    @Res({ passthrough: true }) response: Response,
-  ) {
-    const configResult = await this.getAuthConfigUseCase.execute();
-    if (
-      !configResult.isFailure() &&
-      configResult.value?.signupEnabled === false
-    ) {
-      throw new ForbiddenException('Registration is disabled');
+  async signUp(@Body() body: CreateUserRequest) {
+    const getAuthConfigResult = await this.getAuthConfigUseCase.execute();
+
+    if (getAuthConfigResult.isFailure()) {
+      throw new Error('Failed to retrieve auth configuration');
     }
 
-    const createUserResult = await this.createUserUseCase.execute(signUpDto);
+    const authConfig = getAuthConfigResult.value!;
+
+    if (!authConfig.signupEnabled) {
+      throw new UnauthorizedException('Sign-up is currently disabled');
+    }
+
+    const createUserResult = await this.createUserUseCase.execute(body);
 
     if (createUserResult.isFailure()) {
-      return {
-        success: false,
-      };
+      throw new Error('Failed to create user');
     }
 
-    const user = createUserResult.value!;
+    const user = toUserResponse(createUserResult.value!);
 
     const loginResult = await this.loginUseCase.execute({
-      email: user.email,
-      password: signUpDto.password,
-    });
+      user,
+    } as AuthenticatedRequest);
 
     if (loginResult.isFailure()) {
-      return {
-        success: false,
-        message: loginResult.failure?.message,
-      };
+      throw new UnauthorizedException('User created but failed to log in');
     }
-
     const loginResponse = loginResult.value!;
 
-    // Set refresh token as httpOnly cookie (only if provided)
-    if (loginResponse.refreshToken) {
-      response.cookie('refresh_token', loginResponse.refreshToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
-        maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
-        path: '/auth/refresh', // Only send to refresh endpoint
-      });
-    }
-
-    if (loginResponse.accessToken) {
-      response.cookie('access_token', loginResponse.accessToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
-        maxAge: 15 * 60 * 1000, // 15 minutes
-        path: '/',
-      });
-    }
-
-    return {
-      success: true,
-      value: {
-        accessToken: loginResponse.accessToken,
-        userId: loginResponse.userId,
-        expiresAt: loginResponse.expiresAt,
-      },
-    };
+    return { success: true, value: loginResponse };
   }
 
+  /**
+   * @deprecated
+   * This endpoint is only kept for backward compatibility.
+   * Use the /refresh/invalidate endpoint instead so that refresh tokens are revoked.
+   */
+  @Post('logout')
+  logout(@Res({ passthrough: true }) response: Response) {
+    // Clear the refresh token cookie
+    response.clearCookie('refresh_token', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+    });
+
+    response.clearCookie('access_token', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+    });
+  }
+
+  @UseGuards(JwtRefreshAuthGuard)
   @Post('refresh')
-  async refreshToken(
-    @Req() request: Request,
+  async refresh(
+    @Request() request: AuthenticatedRequest,
     @Res({ passthrough: true }) response: Response,
   ) {
-    const refreshToken: string = request.cookies['refresh_token'] as string;
+    return await this.handleLogin(request, response);
+  }
 
-    if (!refreshToken) {
-      throw new InvalidTokenError('Refresh token not provided');
+  @Post('refresh/invalidate')
+  async invalidateRefreshToken(
+    @Req() request: AuthenticatedRequest,
+    @Res({ passthrough: true }) response: Response,
+    @Body() body: { logoutAll?: boolean },
+  ) {
+    // revoke the refresh token
+    const refreshToken = request.cookies['refresh_token'] as string | undefined;
+
+    await this.logoutUseCase.execute({
+      userId: request.user.id,
+      refreshToken,
+      logoutAll: body.logoutAll,
+    });
+
+    // Clear the refresh token cookie
+    response.clearCookie('refresh_token', {
+      httpOnly: true,
+      path: '/refresh',
+      secure: process.env.NODE_ENV === 'production',
+    });
+
+    response.clearCookie('access_token', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+    });
+
+    return;
+  }
+
+  private async handleLogin(request: AuthenticatedRequest, response: Response) {
+    const loginResult = await this.loginUseCase.execute(request);
+
+    if (loginResult.isFailure()) {
+      throw new InternalServerErrorException('Failed to generate tokens');
     }
 
-    const result = await this.refreshTokenUseCase.execute({ refreshToken });
+    const { accessToken, refreshToken, userId, message } = loginResult.value!;
 
-    if (result.isFailure()) {
-      return {
-        success: false,
-        message: result.failure?.message,
-      };
-    }
+    // Set the new refresh token in an HttpOnly cookie
+    response.cookie('refresh_token', refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      path: '/refresh',
+      sameSite: 'strict',
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    });
 
-    const refreshTokenResponse = result.value!;
-
-    // Set new refresh token as cookie
-    response.cookie('access_token', refreshTokenResponse.accessToken, {
+    response.cookie('access_token', accessToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
-      maxAge: 15 * 60 * 1000, // 15 Minutes
-      path: '/',
+      maxAge: 15 * 60 * 1000, // 15 minutes
     });
 
-    return {
-      success: true,
-      value: {
-        accessToken: refreshTokenResponse.accessToken,
-        expiresAt: refreshTokenResponse.expiresAt,
-      },
-    };
-  }
-
-  @Post('logout')
-  @UseGuards(JwtAuthGuard)
-  async logout(
-    @Req() request: Request,
-    @Res({ passthrough: true }) response: Response,
-  ) {
-    const refreshToken = request.cookies['refresh_token'] as string;
-
-    await this.logoutUseCase.execute({
-      refreshToken,
-    });
-
-    response.clearCookie('refresh_token', { path: '/auth/refresh' });
-    response.clearCookie('access_token', { path: '/' });
-
-    return {
-      success: true,
-      value: { message: 'Successfully logged out' },
-    };
-  }
-
-  @Post('users')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN')
-  async createUser(@Body() dto: AdminCreateUserRequest) {
-    const user = await this.adminCreateUserUseCase.execute(dto);
-
-    return {
-      id: user.id,
-      name: user.name,
-      email: user.email,
-    };
+    return { success: true, value: { userId, accessToken, message } };
   }
 }

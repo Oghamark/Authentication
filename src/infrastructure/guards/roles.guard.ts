@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { ROLES_KEY } from '../decorators/roles.decorator';
-import { Request } from 'express';
+import { AuthenticatedRequest } from 'src/application/dtos/auth/authenticated_request';
 
 @Injectable()
 export class RolesGuard implements CanActivate {
@@ -22,14 +22,13 @@ export class RolesGuard implements CanActivate {
       return true;
     }
 
-    const request: Request = context.switchToHttp().getRequest();
-    const user = request['user'] as { roles?: string[] };
+    const request: AuthenticatedRequest = context.switchToHttp().getRequest();
 
-    if (!user?.roles) {
+    if (!request?.user?.role) {
       throw new ForbiddenException('Insufficient permissions');
     }
 
-    const hasRole = requiredRoles.some((role) => user.roles!.includes(role));
+    const hasRole = requiredRoles.some((role) => request?.user.role == role);
     if (!hasRole) {
       throw new ForbiddenException('Insufficient permissions');
     }
