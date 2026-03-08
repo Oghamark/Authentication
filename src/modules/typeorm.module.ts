@@ -1,5 +1,4 @@
 import { Logger, Module } from '@nestjs/common';
-import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { UserEntity } from '../infrastructure/database/entities/user.entity';
 import { RefreshTokenEntity } from '../infrastructure/database/entities/refresh_token.entity';
@@ -7,25 +6,23 @@ import { AuthConfigEntity } from '../infrastructure/database/entities/auth_confi
 import { SchemaUpdate1754842692371 } from '../migrations/1754842692371-schema-update';
 import { SchemaUpdate1754842692372 } from '../migrations/1754842692372-schema-update';
 import { AuthConfig1772326398310 } from '../migrations/1772326398310-auth-config';
+import { OidcConfig1772326398311 } from '../migrations/1772326398311-oidc-config';
+import { UniqueUserEmail1773181138305 } from '../migrations/1773181138305-unique-user-email';
+import { type DatabaseConfig, databaseConfig } from 'src/infrastructure/config';
 
 @Module({
   imports: [
     TypeOrmModule.forRootAsync({
-      imports: [ConfigModule],
-      useFactory: (configService: ConfigService) => {
+      inject: [databaseConfig.KEY],
+      useFactory: (databaseConfig: DatabaseConfig) => {
         const logger = new Logger('TypeOrmModule');
-        const isProduction =
-          configService.get<string>('NODE_ENV') === 'production';
 
         // Validate required environment variables
-        const username = configService.get<string>('DATABASE_USERNAME');
-        const password = configService.get<string>('DATABASE_PASSWORD');
-        const host = configService.get<string>('DATABASE_HOST', 'localhost');
-        const port = configService.get<number>('DATABASE_PORT', 5432);
-        const database = configService.get<string>(
-          'DATABASE_NAME',
-          'authentication',
-        );
+        const username = databaseConfig.user;
+        const password = databaseConfig.password;
+        const host = databaseConfig.host;
+        const port = databaseConfig.port;
+        const database = databaseConfig.name;
 
         logger.log(`Connecting to ${database} at ${host}:${port}`);
 
@@ -48,14 +45,15 @@ import { AuthConfig1772326398310 } from '../migrations/1772326398310-auth-config
             SchemaUpdate1754842692371,
             SchemaUpdate1754842692372,
             AuthConfig1772326398310,
+            OidcConfig1772326398311,
+            UniqueUserEmail1773181138305,
           ],
           migrationsRun: true,
           migrationsTableName: 'migration_table',
-          synchronize: !isProduction,
-          logging: !isProduction,
+          synchronize: databaseConfig.synchronize,
+          logging: databaseConfig.logging,
         };
       },
-      inject: [ConfigService],
     }),
   ],
 })

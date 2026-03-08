@@ -21,20 +21,6 @@ export class PasswordsDontMatchException extends DomainException {
   }
 }
 
-export class TokenExpiredError extends DomainException {
-  constructor() {
-    super('Token has expired');
-    this.name = 'TokenExpiredError';
-  }
-}
-
-export class RefreshTokenRevokedError extends DomainException {
-  constructor() {
-    super('Refresh token has been revoked');
-    this.name = 'RefreshTokenRevokedError';
-  }
-}
-
 export class SignupDisabledError extends DomainException {
   constructor() {
     super('Public signup is currently disabled');

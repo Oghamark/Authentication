@@ -7,14 +7,14 @@ import { ICryptoGateway } from 'src/application/interfaces/crypto_gateway';
 import { IRefreshTokenRepository } from 'src/application/interfaces/refresh_token_repository';
 import { GenericFailure } from 'src/core/failure';
 import {
-  toUserResponse,
-  UserResponse,
-} from 'src/application/dtos/user/user_response';
+  toUserPrincipal,
+  UserPrincipal,
+} from 'src/application/dtos/user/user_principal';
 
 @Injectable()
 export class VerifyRefreshTokenUseCase implements IUseCase<
   VerifyRefreshTokenRequest,
-  UserResponse
+  UserPrincipal
 > {
   constructor(
     @Inject('UserRepository')
@@ -28,7 +28,7 @@ export class VerifyRefreshTokenUseCase implements IUseCase<
   async execute({
     refreshToken,
     userId,
-  }: VerifyRefreshTokenRequest): Promise<Result<UserResponse>> {
+  }: VerifyRefreshTokenRequest): Promise<Result<UserPrincipal>> {
     // Validate user exists
     const findUserResult = await this.userRepository.findById(userId);
 
@@ -58,7 +58,7 @@ export class VerifyRefreshTokenUseCase implements IUseCase<
       return Result.fail(new GenericFailure('Invalid refresh token'));
     }
 
-    const userResponse = toUserResponse(findUserResult.value!);
+    const userResponse = toUserPrincipal(findUserResult.value!);
 
     return Result.ok(userResponse);
   }

@@ -11,9 +11,9 @@ import { PassportModule } from '@nestjs/passport';
 import { LocalStrategy } from 'src/infrastructure/strategies/local.strategy';
 import { JwtTokenGateway } from 'src/infrastructure/gateways/jwt_token.gateway';
 import { JwtModule } from '@nestjs/jwt';
-import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AuthController } from 'src/presentation/controllers/auth.controller';
 import { LoginUseCase } from 'src/application/use_cases/auth/login';
+import { OidcLoginUseCase } from 'src/application/use_cases/auth/oidc_login';
 import {
   JwtAccessTokenStrategy,
   JwtRefreshTokenStrategy,
@@ -23,6 +23,11 @@ import { VerifyRefreshTokenUseCase } from 'src/application/use_cases/auth/verify
 import { CreateUserUseCase } from 'src/application/use_cases/user/create_user';
 import { GetAuthConfigUseCase } from 'src/application/use_cases/config/get_auth_config';
 import { LogoutUseCase } from 'src/application/use_cases/auth/logout';
+import { jwtConfig, type JwtConfig } from 'src/infrastructure/config';
+import { OidcStrategyFactory } from 'src/infrastructure/strategies/oidc.strategy';
+import { OidcStateService } from 'src/infrastructure/oidc-state.service';
+import { OidcAuthGuard } from 'src/infrastructure/guards/oidc_auth.guard';
+import { OidcExceptionFilter } from 'src/infrastructure/filters/oidc-exception.filter';
 
 @Module({
   imports: [
@@ -31,12 +36,10 @@ import { LogoutUseCase } from 'src/application/use_cases/auth/logout';
     TypeOrmModule.forFeature([AuthConfigEntity]),
     PassportModule,
     JwtModule.registerAsync({
-      imports: [ConfigModule],
-      useFactory: (configService: ConfigService) => ({
-        secret: configService.get('JWT_ACCESS_SECRET'),
-        signOptions: { expiresIn: '1h' },
+      inject: [jwtConfig.KEY],
+      useFactory: (config: JwtConfig) => ({
+        signOptions: { expiresIn: config.jwtAccessExpiration },
       }),
-      inject: [ConfigService],
     }),
   ],
   controllers: [AuthController],
@@ -65,12 +68,19 @@ import { LogoutUseCase } from 'src/application/use_cases/auth/logout';
     LocalStrategy,
     JwtAccessTokenStrategy,
     JwtRefreshTokenStrategy,
+    OidcStrategyFactory,
+    OidcAuthGuard,
+    // OIDC state service for managing returnTo state between start and callback
+    OidcStateService,
+    // Exception filter to map OIDC errors to redirects or JSON
+    OidcExceptionFilter,
 
     // Use cases
     CreateUserUseCase,
     GetAuthConfigUseCase,
     LoginUseCase,
     LogoutUseCase,
+    OidcLoginUseCase,
     ValidateUserUseCase,
     VerifyRefreshTokenUseCase,
   ],
@@ -80,6 +90,13 @@ import { LogoutUseCase } from 'src/application/use_cases/auth/logout';
     'TokenGateway',
     'CryptoGateway',
     'AuthConfigRepository',
+    OidcStrategyFactory,
   ],
 })
-export class AuthModule {}
+export class AuthModule {
+  constructor(private oidcStrategyFactory: OidcStrategyFactory) {}
+
+  async onModuleInit() {
+    await this.oidcStrategyFactory.createStrategy();
+  }
+}

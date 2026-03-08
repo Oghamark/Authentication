@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { Strategy } from 'passport-local';
 import { ValidateUserUseCase } from 'src/application/use_cases/auth/validate_user';
-import { UserResponse } from 'src/application/dtos/user/user_response';
+import { UserPrincipal } from 'src/application/dtos/user/user_principal';
 import { InvalidCredentialsError } from 'src/domain/exceptions/auth.exceptions';
 
 @Injectable()
@@ -11,7 +11,7 @@ export class LocalStrategy extends PassportStrategy(Strategy) {
     super({ usernameField: 'email', passwordField: 'password' });
   }
 
-  async validate(username: string, password: string): Promise<UserResponse> {
+  async validate(username: string, password: string): Promise<UserPrincipal> {
     const validateUserResult = await this.validateUserUseCase.execute({
       email: username,
       password,

@@ -1,5 +1,8 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { IAuthConfigRepository } from 'src/application/interfaces/auth_config_repository';
+import {
+  AuthConfig,
+  IAuthConfigRepository,
+} from 'src/application/interfaces/auth_config_repository';
 import { Result } from 'src/core/result';
 
 @Injectable()
@@ -9,9 +12,7 @@ export class UpdateAuthConfigUseCase {
     private readonly authConfigRepository: IAuthConfigRepository,
   ) {}
 
-  async execute(
-    config: Partial<{ signupEnabled: boolean }>,
-  ): Promise<Result<{ signupEnabled: boolean }>> {
+  async execute(config: Partial<AuthConfig>): Promise<Result<AuthConfig>> {
     return this.authConfigRepository.update(config);
   }
 }

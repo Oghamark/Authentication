@@ -20,7 +20,7 @@ export class LogoutUseCase implements IUseCase<LogoutRequest, void> {
   async execute({
     userId,
     refreshToken,
-    logoutAll,
+    logoutAll = false,
   }: LogoutRequest): Promise<Result> {
     if (logoutAll && userId) {
       // Revoke all refresh tokens for the user

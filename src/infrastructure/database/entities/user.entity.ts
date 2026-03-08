@@ -8,11 +8,11 @@ export class UserEntity {
   @Column()
   name: string;
 
-  @Column()
+  @Column({ unique: true })
   email: string;
 
-  @Column()
-  password: string;
+  @Column({ type: 'varchar', nullable: true })
+  password: string | null;
 
   @Column({ default: 'USER' })
   role: string;

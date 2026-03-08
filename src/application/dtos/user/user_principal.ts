@@ -1,13 +1,13 @@
 import { User } from 'src/domain/entities/user.entity';
 
-export interface UserResponse {
+export interface UserPrincipal {
   id: string;
   name: string;
   email: string;
   role: string;
 }
 
-export function toUserResponse(user: User): UserResponse {
+export function toUserPrincipal(user: User): UserPrincipal {
   return {
     id: user.id,
     name: user.name,

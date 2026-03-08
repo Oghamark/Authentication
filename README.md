@@ -11,16 +11,20 @@ A self-hosted JWT authentication service built with NestJS and TypeORM.
 
 1. Create a `.env` file containing the following variables:
 
-   | Variable | Required | Description |
-   |---|---|---|
-   | `DATABASE_HOST` | Yes | PostgreSQL host |
-   | `DATABASE_USERNAME` | Yes | PostgreSQL user |
-   | `DATABASE_PASSWORD` | Yes | PostgreSQL password |
-   | `DATABASE_PORT` | Yes | PostgreSQL port |
-   | `JWT_ACCESS_SECRET` | Yes | Secret for signing access tokens |
-   | `JWT_REFRESH_SECRET` | Yes | Secret for signing refresh tokens |
-   | `CORS_ORIGIN` | Yes | Allowed CORS origin |
-   | `PORT` | No | Port for the service (defaults to 3000) |
+   | Variable                 | Required | Description                                         |
+   |--------------------------|----------|-----------------------------------------------------|
+   | `DATABASE_HOST`          | Yes      | PostgreSQL host                                     |
+   | `DATABASE_PORT`          | Yes      | PostgreSQL port                                     |
+  || `DATABASE_NAME`          | Yes      | PostgreSQL database name                            |
+   | `DATABASE_USERNAME`      | Yes      | PostgreSQL user                                     |
+   | `DATABASE_PASSWORD`      | Yes      | PostgreSQL password                                 |
+   | `JWT_ACCESS_SECRET`      | Yes      | Secret for signing access tokens                    |
+   | `JWT_REFRESH_SECRET`     | Yes      | Secret for signing refresh tokens                   |
+  || `JWT_ACCESS_EXPIRATION`  | No       | Time an access token is valid for (Defaults to 15m) |
+  || `JWT_REFRESH_EXPIRATION` | No       | Time a refresh token is valid for (Defaults to 7d)  |
+   | `CORS_ORIGIN`            | Yes      | Allowed CORS origin                                 |
+   | `PORT`                   | No       | Port for the service (defaults to 3000)             |
+
 
 2. Install dependencies:
    ```sh

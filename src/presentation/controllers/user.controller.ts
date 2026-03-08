@@ -20,10 +20,10 @@ import { CreateUserRequest } from 'src/application/dtos/user/create_user_request
 import { UpdateUserRequest } from 'src/application/dtos/user/update_user_request';
 import { DeleteUserByEmailRequest } from 'src/application/dtos/user/delete_user_by_email_request';
 import { RolesGuard } from 'src/infrastructure/guards/roles.guard';
-import { Roles } from 'src/infrastructure/decorators/roles.decorator';
-import { toUserResponse } from 'src/application/dtos/user/user_response';
-import { AuthenticatedRequest } from 'src/application/dtos/auth/authenticated_request';
 import { JwtAuthGuard } from 'src/infrastructure/guards/jwt_auth.guard';
+import { Roles } from 'src/infrastructure/decorators/roles.decorator';
+import { toUserPrincipal } from 'src/application/dtos/user/user_principal';
+import { AuthenticatedRequest } from 'src/application/dtos/auth/authenticated_request';
 
 @Controller('users')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -51,7 +51,7 @@ export class UserController {
 
     return {
       success: true,
-      value: getUsersResult.value!.map(toUserResponse),
+      value: getUsersResult.value!.map(toUserPrincipal),
     };
   }
 
@@ -68,7 +68,7 @@ export class UserController {
 
     return {
       success: true,
-      value: toUserResponse(getUsersResult.value),
+      value: toUserPrincipal(getUsersResult.value),
     };
   }
 
@@ -87,11 +87,11 @@ export class UserController {
 
     return {
       success: true,
-      value: toUserResponse(createUserResult.value!),
+      value: toUserPrincipal(createUserResult.value!),
     };
   }
 
-  @Post(':id')
+  @Patch(':id')
   @Roles('ADMIN')
   async update(
     @Param() params: { id: string },
@@ -111,7 +111,7 @@ export class UserController {
 
     return {
       success: true,
-      value: toUserResponse(updateUserResult.value!),
+      value: toUserPrincipal(updateUserResult.value!),
     };
   }
 
@@ -137,7 +137,7 @@ export class UserController {
 
     return {
       success: true,
-      value: toUserResponse(updateResult.value!),
+      value: toUserPrincipal(updateResult.value!),
     };
   }
 

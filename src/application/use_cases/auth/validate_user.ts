@@ -1,9 +1,9 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { IUseCase } from 'src/application/interfaces/use_case';
 import {
-  toUserResponse,
-  UserResponse,
-} from 'src/application/dtos/user/user_response';
+  toUserPrincipal,
+  UserPrincipal,
+} from 'src/application/dtos/user/user_principal';
 import { LoginRequest } from 'src/application/dtos/auth/login_request';
 import { IUserRepository } from 'src/application/interfaces/user_repository';
 import { ICryptoGateway } from 'src/application/interfaces/crypto_gateway';
@@ -13,7 +13,7 @@ import { GenericFailure } from 'src/core/failure';
 @Injectable()
 export class ValidateUserUseCase implements IUseCase<
   LoginRequest,
-  UserResponse
+  UserPrincipal
 > {
   constructor(
     @Inject('UserRepository')
@@ -25,7 +25,7 @@ export class ValidateUserUseCase implements IUseCase<
   async execute({
     email,
     password,
-  }: LoginRequest): Promise<Result<UserResponse>> {
+  }: LoginRequest): Promise<Result<UserPrincipal>> {
     const userResult = await this.userRepository.findByEmail(email);
 
     if (userResult.isFailure()) {
@@ -33,13 +33,18 @@ export class ValidateUserUseCase implements IUseCase<
     }
 
     const user = userResult.value!;
+
+    if (!user.password) {
+      return Result.fail(new GenericFailure('Invalid email or password'));
+    }
+
     const isValid = await this.cryptoGateway.validate(password, user.password);
 
     if (!isValid) {
       return Result.fail(new GenericFailure('Invalid email or password'));
     }
 
-    const userResponse = toUserResponse(user);
+    const userResponse = toUserPrincipal(user);
 
     return Result.ok(userResponse);
   }

@@ -1,24 +1,18 @@
-import { ExecutionContext, Injectable } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import { Reflector } from '@nestjs/core';
 
 @Injectable()
-export class JwtAuthGuard extends AuthGuard('jwt') {
-  constructor(private reflector: Reflector) {
-    super();
-  }
+export class JwtAuthGuard extends AuthGuard('jwt') {}
 
-  canActivate(context: ExecutionContext) {
-    const isPublic = this.reflector.getAllAndOverride<boolean>('isPublic', [
-      context.getHandler(),
-      context.getClass(),
-    ]);
-    if (isPublic) {
-      return true;
+@Injectable()
+export class JwtRefreshAuthGuard extends AuthGuard('jwt-refresh') {
+  handleRequest<UserPrincipal>(
+    err: unknown,
+    user: UserPrincipal,
+  ): UserPrincipal {
+    if (err || !user) {
+      throw new UnauthorizedException('Invalid or expired refresh token');
     }
-    return super.canActivate(context);
+    return user;
   }
 }
-
-@Injectable()
-export class JwtRefreshAuthGuard extends AuthGuard('jwt-refresh') {}

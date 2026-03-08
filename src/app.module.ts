@@ -5,13 +5,19 @@ import { TypeOrmConfigModule } from './modules/typeorm.module';
 import { AuthModule } from './modules/auth.module';
 import { AppConfigModule } from './modules/config.module';
 import { HealthModule } from './modules/health.module';
+import {
+  jwtConfig,
+  databaseConfig,
+  appConfig,
+} from 'src/infrastructure/config';
 
 @Module({
   imports: [
     // Configuration first
     ConfigModule.forRoot({
+      load: [appConfig, jwtConfig, databaseConfig],
+      envFilePath: ['.env', '.env.local'],
       isGlobal: true,
-      envFilePath: ['.env.local', '.env'],
     }),
 
     // Database configuration

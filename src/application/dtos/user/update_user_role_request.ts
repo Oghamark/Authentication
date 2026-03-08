@@ -1,6 +1,6 @@
 import { IsIn, IsNotEmpty, IsString } from 'class-validator';
 
-export class UpdateUserRoleRequest {
+export class UpdateUserRolesRequest {
   @IsNotEmpty()
   @IsString()
   id: string;

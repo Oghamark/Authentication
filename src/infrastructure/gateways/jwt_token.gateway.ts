@@ -1,28 +1,28 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ITokenGateway } from 'src/application/interfaces/token_gateway';
 import { JwtPayload } from 'src/domain/value_objects/jwt_payload';
 import { instanceToPlain } from 'class-transformer';
-import { ConfigService } from '@nestjs/config';
+import { type JwtConfig, jwtConfig } from 'src/infrastructure/config';
 
 @Injectable()
 export class JwtTokenGateway implements ITokenGateway {
   constructor(
-    private readonly configService: ConfigService,
+    @Inject(jwtConfig.KEY) private config: JwtConfig,
     private readonly jwtService: JwtService,
   ) {}
 
   generateAccessToken(payload: JwtPayload): string {
     return this.jwtService.sign(instanceToPlain(payload), {
-      secret: this.configService.get<string>('JWT_ACCESS_SECRET'),
-      expiresIn: '15m',
+      secret: this.config.jwtAccessSecret,
+      expiresIn: this.config.jwtAccessExpiration,
     });
   }
 
   generateRefreshToken(payload: JwtPayload): string {
     return this.jwtService.sign(instanceToPlain(payload), {
-      secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
-      expiresIn: '7d',
+      secret: this.config.jwtRefreshSecret,
+      expiresIn: this.config.jwtRefreshExpiration,
     });
   }
 }

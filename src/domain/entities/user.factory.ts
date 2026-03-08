@@ -24,34 +24,31 @@ export class UserFactory {
     return new User(randomUUID(), name, email, password, role);
   }
 
+  static createPrincipal({
+    name,
+    email,
+    role = 'USER',
+  }: Pick<User, 'email' | 'name'> & { role?: string }): User {
+    if (!name || !email) {
+      throw new Error('Name and email are required to create a principal user');
+    }
+
+    return new User(randomUUID(), name, email, null, role);
+  }
+
   static reconstitute({
     id,
     name,
     email,
     password,
     role,
-  }: Pick<User, 'id' | 'name' | 'email' | 'password' | 'role'>): User {
-    if (!id || !name || !email || !password || !role) {
+  }: Pick<User, 'id' | 'name' | 'email' | 'role'> & {
+    password: string | null;
+  }): User {
+    if (!id || !name || !email || !role) {
       throw new Error('All fields are required to reconstitute a user');
     }
 
     return new User(id, name, email, password, role);
-  }
-
-  /**
-   * Updates an existing user with the provided data.
-   * @param user - The user to update.
-   * @param data - Partial data to update the user.
-   * @returns The updated user.
-   */
-  static update(
-    user: User,
-    { name, email, password, role }: Partial<User>,
-  ): User {
-    if (name) user.name = name;
-    if (email) user.email = email;
-    if (password) user.password = password;
-    if (role) user.role = role;
-    return user;
   }
 }

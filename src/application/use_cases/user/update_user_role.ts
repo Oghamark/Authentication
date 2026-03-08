@@ -6,12 +6,12 @@ import {
   UserNotFoundError,
 } from 'src/domain/exceptions/user.exceptions';
 import { IUseCase } from 'src/application/interfaces/use_case';
-import { UpdateUserRoleRequest } from 'src/application/dtos/user/update_user_role_request';
+import { UpdateUserRolesRequest } from 'src/application/dtos/user/update_user_role_request';
 import { Result } from 'src/core/result';
 
 @Injectable()
 export class UpdateUserRoleUseCase implements IUseCase<
-  UpdateUserRoleRequest,
+  UpdateUserRolesRequest,
   User
 > {
   constructor(
@@ -23,7 +23,7 @@ export class UpdateUserRoleUseCase implements IUseCase<
     id,
     authenticatedUserId,
     role,
-  }: UpdateUserRoleRequest): Promise<Result<User>> {
+  }: UpdateUserRolesRequest): Promise<Result<User>> {
     try {
       if (id === authenticatedUserId) {
         throw new CannotModifyOwnRoleError();
