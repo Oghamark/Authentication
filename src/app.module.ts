@@ -5,6 +5,7 @@ import { TypeOrmConfigModule } from './modules/typeorm.module';
 import { AuthModule } from './modules/auth.module';
 import { AppConfigModule } from './modules/config.module';
 import { HealthModule } from './modules/health.module';
+import { SessionModule } from './modules/session.module';
 import {
   jwtConfig,
   databaseConfig,
@@ -28,6 +29,7 @@ import {
     AuthModule,
     AppConfigModule,
     HealthModule,
+    SessionModule,
   ],
   controllers: [],
   providers: [],

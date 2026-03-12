@@ -9,6 +9,7 @@ import { AuthConfig1772326398310 } from '../migrations/1772326398310-auth-config
 import { OidcConfig1772326398311 } from '../migrations/1772326398311-oidc-config';
 import { UniqueUserEmail1773181138305 } from '../migrations/1773181138305-unique-user-email';
 import { type DatabaseConfig, databaseConfig } from 'src/infrastructure/config';
+import { SessionTable1773367139650 } from 'src/migrations/1773367139650-session-table';
 
 @Module({
   imports: [
@@ -47,6 +48,7 @@ import { type DatabaseConfig, databaseConfig } from 'src/infrastructure/config';
             AuthConfig1772326398310,
             OidcConfig1772326398311,
             UniqueUserEmail1773181138305,
+            SessionTable1773367139650,
           ],
           migrationsRun: true,
           migrationsTableName: 'migration_table',
