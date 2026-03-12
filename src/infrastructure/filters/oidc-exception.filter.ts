@@ -4,6 +4,7 @@ import {
   ArgumentsHost,
   Injectable,
   HttpException,
+  Logger,
 } from '@nestjs/common';
 import { OidcStateService } from 'src/infrastructure/oidc-state.service';
 import { RegistrationDisabledException } from 'src/infrastructure/registration-disabled.exception';
@@ -13,6 +14,8 @@ import { Request, Response } from 'express';
 @Injectable()
 export class OidcExceptionFilter implements ExceptionFilter {
   constructor(private readonly oidcStateService: OidcStateService) {}
+
+  private readonly logger = new Logger('OidcExceptionFilter');
 
   catch(exception: Error, host: ArgumentsHost) {
     const context = host.switchToHttp();
@@ -41,8 +44,13 @@ export class OidcExceptionFilter implements ExceptionFilter {
 
     // Generic handling for other exceptions during OIDC callback
     if (returnTo && returnTo.startsWith('/') && !returnTo.startsWith('//')) {
+      this.logger.error(
+        exception.message ?? 'Something went wrong during OIDC callback',
+      );
       const sep = returnTo.includes('?') ? '&' : '?';
-      response.redirect(`${returnTo}${sep}error=failed`);
+      response.redirect(
+        `${returnTo}${sep}error=${encodeURIComponent('Something went wrong during authentication. See logs for details.')}`,
+      );
       return;
     }
 
