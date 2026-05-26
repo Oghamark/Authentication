@@ -12,6 +12,6 @@ export class LocalAuthGuard extends AuthGuard('local') {
     if (err || !user) {
       throw new UnauthorizedException('Invalid email or password');
     }
-    return { provider: 'local', ...user };
+    return { provider: 'LOCAL', ...user };
   }
 }

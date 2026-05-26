@@ -15,25 +15,29 @@ export class UserFactory {
     name,
     email,
     password,
+    provider,
     role = 'USER',
-  }: Pick<User, 'email' | 'name' | 'password'> & { role?: string }): User {
+  }: Pick<User, 'email' | 'name' | 'password' | 'provider'> & {
+    role?: string;
+  }): User {
     if (!name || !email || !password) {
       throw new Error('All fields are required to create a user');
     }
 
-    return new User(randomUUID(), name, email, password, role);
+    return new User(randomUUID(), name, email, password, role, provider);
   }
 
   static createPrincipal({
     name,
     email,
     role = 'USER',
-  }: Pick<User, 'email' | 'name'> & { role?: string }): User {
+    provider,
+  }: Pick<User, 'email' | 'name' | 'provider'> & { role?: string }): User {
     if (!name || !email) {
       throw new Error('Name and email are required to create a principal user');
     }
 
-    return new User(randomUUID(), name, email, null, role);
+    return new User(randomUUID(), name, email, null, role, provider);
   }
 
   static reconstitute({
@@ -42,13 +46,14 @@ export class UserFactory {
     email,
     password,
     role,
-  }: Pick<User, 'id' | 'name' | 'email' | 'role'> & {
+    provider,
+  }: Pick<User, 'id' | 'name' | 'email' | 'role' | 'provider'> & {
     password: string | null;
   }): User {
     if (!id || !name || !email || !role) {
       throw new Error('All fields are required to reconstitute a user');
     }
 
-    return new User(id, name, email, password, role);
+    return new User(id, name, email, password, role, provider);
   }
 }

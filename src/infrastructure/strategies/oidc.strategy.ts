@@ -92,6 +92,7 @@ export class OidcStrategy extends PassportStrategy(Strategy, 'oidc') {
       email: userinfo.email,
       name: userinfo.name ?? userinfo.email,
       role: 'USER',
+      provider: 'OIDC',
     };
   }
 }

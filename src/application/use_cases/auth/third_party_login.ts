@@ -46,6 +46,7 @@ export class ThirdPartyLoginUseCase implements IUseCase<
       name: userPrincipal.name,
       email: userPrincipal.email,
       role: userPrincipal.role,
+      provider: userPrincipal.provider,
     });
 
     const createUserResult = await this.userRepository.save(newUser);

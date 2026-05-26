@@ -5,7 +5,7 @@ export interface UserPrincipal {
   name: string;
   email: string;
   role: string;
-  provider?: string;
+  provider: string;
 }
 
 export function toUserPrincipal(user: User): UserPrincipal {
@@ -14,5 +14,6 @@ export function toUserPrincipal(user: User): UserPrincipal {
     name: user.name,
     email: user.email,
     role: user.role,
+    provider: user.provider,
   };
 }

@@ -24,7 +24,7 @@ export class LdapAuthGuard extends AuthGuard('ldap') {
 
     return {
       ...user,
-      provider: 'ldap',
+      provider: 'LDAP',
       email,
       name,
       // TODO

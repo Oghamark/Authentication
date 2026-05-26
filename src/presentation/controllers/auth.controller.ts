@@ -55,7 +55,7 @@ export class AuthController {
     @Request() request: AuthenticatedRequest,
     @Res({ passthrough: true }) response: Response,
   ) {
-    if (request.user.provider !== 'local') {
+    if (request.user.provider !== 'LOCAL') {
       const res = await this.thirdPartyLoginUseCase.execute(request.user);
       if (res.isSuccess()) {
         request.user = res.value!;

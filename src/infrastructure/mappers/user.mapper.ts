@@ -10,6 +10,7 @@ export class UserMapper {
       email: userEntity.email,
       password: userEntity.password,
       role: userEntity.role,
+      provider: userEntity.provider,
     });
   }
 
@@ -20,6 +21,7 @@ export class UserMapper {
       email: user.email,
       password: user.password,
       role: user.role,
+      provider: user.provider,
     };
   }
 
