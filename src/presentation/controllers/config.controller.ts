@@ -7,7 +7,6 @@ import { Roles } from 'src/infrastructure/decorators/roles.decorator';
 import { UpdateAuthConfigRequest } from 'src/application/dtos/config/update_auth_config_request';
 import { OidcStrategyFactory } from 'src/infrastructure/strategies/oidc.strategy';
 import { LdapStrategyFactory } from 'src/infrastructure/strategies/ldap.strategy';
-import { AuthConfig } from 'src/application/interfaces/auth_config_repository';
 
 @Controller('config')
 export class ConfigController {
@@ -59,32 +58,13 @@ export class ConfigController {
       return { success: false, message: result.failure?.message };
     }
 
-    const authConfig: AuthConfig = {
-      signupEnabled: result.value!.signupEnabled,
-      oidcEnabled: result.value!.oidcEnabled,
-      oidcIssuerUrl: result.value!.oidcIssuerUrl,
-      oidcClientId: result.value!.oidcClientId,
-      oidcClientSecret: result.value!.oidcClientSecret,
-      oidcCallbackUrl: result.value!.oidcCallbackUrl,
-      oidcProviderName: result.value!.oidcProviderName,
-      ldapEnabled: result.value!.ldapEnabled,
-      ldapServerUrl: result.value!.ldapServerUrl,
-      ldapBindDn: result.value!.ldapBindDn,
-      ldapBindPassword: result.value!.ldapBindPassword,
-      ldapBaseDn: result.value!.ldapBaseDn,
-      ldapAdminGroup: result.value!.ldapAdminGroup,
-      ldapUserGroup: result.value!.ldapUserGroup,
-      ldapEmailField: result.value!.ldapEmailField,
-      ldapNameField: result.value!.ldapNameField,
-    };
-
     const hasOidcFields =
       body.oidcIssuerUrl !== undefined ||
       body.oidcClientId !== undefined ||
       body.oidcClientSecret !== undefined;
 
     if (hasOidcFields) {
-      await this.oidcStrategyFactory.recreateStrategy(authConfig);
+      await this.oidcStrategyFactory.recreateStrategy(result.value!);
     }
 
     const hasLdapFields =
@@ -100,7 +80,7 @@ export class ConfigController {
       body.ldapAdminGroup !== undefined;
 
     if (hasLdapFields) {
-      await this.ldapStrategyFactory.recreateStrategy(authConfig);
+      await this.ldapStrategyFactory.recreateStrategy(result.value!);
     }
 
     return { success: true, value: result.value };
