@@ -13,7 +13,7 @@ import { JwtTokenGateway } from 'src/infrastructure/gateways/jwt_token.gateway';
 import { JwtModule } from '@nestjs/jwt';
 import { AuthController } from 'src/presentation/controllers/auth.controller';
 import { LoginUseCase } from 'src/application/use_cases/auth/login';
-import { OidcLoginUseCase } from 'src/application/use_cases/auth/oidc_login';
+import { ThirdPartyLoginUseCase } from 'src/application/use_cases/auth/third_party_login';
 import { IAuthConfigRepository } from 'src/application/interfaces/auth_config_repository';
 
 import {
@@ -93,7 +93,7 @@ import { LdapAuthGuard } from 'src/infrastructure/guards/ldap_auth.guard';
     GetAuthConfigUseCase,
     LoginUseCase,
     LogoutUseCase,
-    OidcLoginUseCase,
+    ThirdPartyLoginUseCase,
     ValidateUserUseCase,
     VerifyRefreshTokenUseCase,
   ],
