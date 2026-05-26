@@ -30,6 +30,11 @@ export class TypeOrmAuthConfigRepository implements IAuthConfigRepository {
         oidcClientSecret: null,
         oidcCallbackUrl: null,
         oidcProviderName: null,
+        ldapEnabled: false,
+        ldapBaseDn: null,
+        ldapBindDn: null,
+        ldapBindPassword: null,
+        ldapServerUrl: null,
       });
       await this.repository.save(entity);
     }
@@ -42,6 +47,11 @@ export class TypeOrmAuthConfigRepository implements IAuthConfigRepository {
       oidcClientSecret: entity.oidcClientSecret,
       oidcCallbackUrl: entity.oidcCallbackUrl,
       oidcProviderName: entity.oidcProviderName,
+      ldapEnabled: entity.ldapEnabled,
+      ldapServerUrl: entity.ldapServerUrl,
+      ldapBindDn: entity.ldapBaseDn,
+      ldapBindPassword: entity.ldapBindPassword,
+      ldapBaseDn: entity.ldapBaseDn,
     });
   }
 
@@ -64,6 +74,8 @@ export class TypeOrmAuthConfigRepository implements IAuthConfigRepository {
     if (config.signupEnabled !== undefined) {
       entity.signupEnabled = config.signupEnabled;
     }
+
+    // OIDC
     if (config.oidcEnabled !== undefined) {
       entity.oidcEnabled = config.oidcEnabled;
     }
@@ -83,6 +95,23 @@ export class TypeOrmAuthConfigRepository implements IAuthConfigRepository {
       entity.oidcProviderName = config.oidcProviderName;
     }
 
+    // LDAP
+    if (config.ldapEnabled !== undefined) {
+      entity.ldapEnabled = config.ldapEnabled;
+    }
+    if (config.ldapBaseDn !== undefined) {
+      entity.ldapBaseDn = config.ldapBaseDn;
+    }
+    if (config.ldapBindDn !== undefined) {
+      entity.ldapBindDn = config.ldapBindDn;
+    }
+    if (config.ldapBindPassword !== undefined) {
+      entity.ldapBindPassword = config.ldapBindPassword;
+    }
+    if (config.ldapServerUrl !== undefined) {
+      entity.ldapServerUrl = config.ldapServerUrl;
+    }
+
     await this.repository.save(entity);
 
     return Result.ok({
@@ -93,6 +122,11 @@ export class TypeOrmAuthConfigRepository implements IAuthConfigRepository {
       oidcClientSecret: entity.oidcClientSecret,
       oidcCallbackUrl: entity.oidcCallbackUrl,
       oidcProviderName: entity.oidcProviderName,
+      ldapEnabled: entity.ldapEnabled,
+      ldapBaseDn: entity.ldapBaseDn,
+      ldapBindDn: entity.ldapBindDn,
+      ldapBindPassword: entity.ldapBindPassword,
+      ldapServerUrl: entity.ldapServerUrl,
     });
   }
 }

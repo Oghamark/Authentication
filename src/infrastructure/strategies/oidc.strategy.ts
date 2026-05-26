@@ -8,36 +8,44 @@ import {
 } from '@nestjs/common';
 import { UserPrincipal } from 'src/application/dtos/user/user_principal';
 import { AppConfig, appConfig } from 'src/infrastructure/config';
-import { IAuthConfigRepository } from 'src/application/interfaces/auth_config_repository';
 import { Result } from 'src/core/result';
 import { GenericFailure } from 'src/core/failure';
+
 import * as passport from 'passport';
+import { AuthConfig } from 'src/application/interfaces/auth_config_repository';
 
 @Injectable()
 export class OidcStrategyFactory {
   constructor(
     @Inject(appConfig.KEY)
     private config: AppConfig,
-    @Inject('AuthConfigRepository')
-    private readonly authConfigRepository: IAuthConfigRepository,
   ) {}
 
   private readonly logger = new Logger('OidcStrategyFactory');
 
-  async createStrategy(): Promise<Result<OidcStrategy>> {
-    return this.recreateStrategy();
+  async createStrategy(authConfig: AuthConfig): Promise<Result<OidcStrategy>> {
+    return this.recreateStrategy(authConfig);
   }
 
-  async recreateStrategy(): Promise<Result<OidcStrategy>> {
-    const configResult = await this.authConfigRepository.get();
-    if (configResult.isFailure()) {
-      return Result.fail(new GenericFailure('Failed to load auth config'));
-    }
+  async recreateStrategy(
+    authConfig: AuthConfig,
+  ): Promise<Result<OidcStrategy>> {
+    const {
+      oidcIssuerUrl,
+      oidcClientId,
+      oidcClientSecret,
+      oidcCallbackUrl,
+      oidcEnabled,
+    } = authConfig;
 
-    const { oidcIssuerUrl, oidcClientId, oidcClientSecret, oidcCallbackUrl } =
-      configResult.value!;
+    if (!oidcEnabled) {
+      this.logger.log(
+        'OIDC is disabled. OIDC strategy will not be initialized.',
+      );
 
-    if (
+      passport.unuse('oidc');
+      return Result.fail(new GenericFailure('OIDC is not configured'));
+    } else if (
       !oidcIssuerUrl ||
       !oidcClientId ||
       !oidcClientSecret ||

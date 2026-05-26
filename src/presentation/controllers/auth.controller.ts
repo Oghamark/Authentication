@@ -26,7 +26,6 @@ import {
 import { Response } from 'express';
 import { OidcStateService } from 'src/infrastructure/oidc-state.service';
 import { LogoutUseCase } from 'src/application/use_cases/auth/logout';
-import { LocalAuthGuard } from 'src/infrastructure/guards/local_auth.guard';
 import { OidcAuthGuard } from 'src/infrastructure/guards/oidc_auth.guard';
 import {
   JwtAuthGuard,
@@ -34,6 +33,7 @@ import {
 } from 'src/infrastructure/guards/jwt_auth.guard';
 import { CurrentUser } from 'src/infrastructure/decorators/current_user.decorator';
 import { Cookie } from 'src/infrastructure/decorators/cookie.decorator';
+import { UserPassAuthGuard } from 'src/infrastructure/guards/user_pass_auth.guard';
 
 @UseFilters(OidcExceptionFilter)
 @Controller()
@@ -49,7 +49,7 @@ export class AuthController {
 
   private readonly logger = new Logger('AuthController');
 
-  @UseGuards(LocalAuthGuard)
+  @UseGuards(UserPassAuthGuard)
   @Post('login')
   async login(
     @Request() request: AuthenticatedRequest,
