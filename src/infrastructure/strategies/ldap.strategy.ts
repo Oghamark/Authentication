@@ -1,10 +1,4 @@
-import {
-  Inject,
-  Injectable,
-  Logger,
-  // UnauthorizedException,
-} from '@nestjs/common';
-// import { UserPrincipal } from 'src/application/dtos/user/user_principal';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { AppConfig, appConfig } from 'src/infrastructure/config';
 import {
   AuthConfig,
@@ -13,7 +7,9 @@ import {
 import { Result } from 'src/core/result';
 import { GenericFailure } from 'src/core/failure';
 import * as passport from 'passport';
-import * as LdapStrategy from 'passport-ldapauth';
+// Annoying commonjs issue with exported overlapping namespace + class...
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+import LdapStrategy = require('passport-ldapauth');
 
 @Injectable()
 export class LdapStrategyFactory {
@@ -41,6 +37,8 @@ export class LdapStrategyFactory {
       ldapBindDn,
       ldapBindPassword,
       ldapBaseDn,
+      ldapEmailField,
+      ldapNameField,
     } = authConfig;
 
     if (!ldapEnabled) {
@@ -50,12 +48,7 @@ export class LdapStrategyFactory {
 
       passport.unuse('ldap');
       return Result.fail(new GenericFailure('LDAP is not configured'));
-    } else if (
-      !ldapServerUrl ||
-      !ldapBaseDn ||
-      !ldapBindPassword ||
-      !ldapBindDn
-    ) {
+    } else if (!ldapServerUrl || !ldapBaseDn || !ldapBindDn) {
       this.logger.warn(
         'LDAP configuration is incomplete. LDAP strategy will not be initialized.',
       );
@@ -64,13 +57,24 @@ export class LdapStrategyFactory {
       return Result.fail(new GenericFailure('LDAP is not configured'));
     }
 
+    const emailField: string = ldapEmailField ?? 'mail';
+
     const options: LdapStrategy.Options = {
       server: {
         url: ldapServerUrl,
         bindDN: ldapBindDn,
-        bindCredentials: ldapBindPassword,
+        bindCredentials: ldapBindPassword ?? undefined,
         searchBase: ldapBaseDn,
-        searchFilter: '(uid={{username}})',
+        searchFilter: `(${emailField}={{username}})`,
+        searchAttributes: [
+          'cn',
+          'sn',
+          'memberOf',
+          'mail',
+          ldapEmailField ?? '',
+          ldapNameField ?? '',
+        ],
+        groupSearchAttributes: ['dn'],
       },
       usernameField: `email`,
       passwordField: `password`,

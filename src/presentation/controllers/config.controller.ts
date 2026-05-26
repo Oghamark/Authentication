@@ -72,6 +72,10 @@ export class ConfigController {
       ldapBindDn: result.value!.ldapBindDn,
       ldapBindPassword: result.value!.ldapBindPassword,
       ldapBaseDn: result.value!.ldapBaseDn,
+      ldapAdminGroup: result.value!.ldapAdminGroup,
+      ldapUserGroup: result.value!.ldapUserGroup,
+      ldapEmailField: result.value!.ldapEmailField,
+      ldapNameField: result.value!.ldapNameField,
     };
 
     const hasOidcFields =
@@ -89,7 +93,11 @@ export class ConfigController {
       body.ldapUserGroup !== undefined ||
       body.ldapBindPassword !== undefined ||
       body.ldapServerUrl !== undefined ||
-      body.ldapEnabled !== undefined;
+      body.ldapEnabled !== undefined ||
+      body.ldapNameField !== undefined ||
+      body.ldapEmailField !== undefined ||
+      body.ldapUserGroup !== undefined ||
+      body.ldapAdminGroup !== undefined;
 
     if (hasLdapFields) {
       await this.ldapStrategyFactory.recreateStrategy(authConfig);

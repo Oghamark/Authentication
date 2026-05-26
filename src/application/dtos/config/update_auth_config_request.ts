@@ -52,4 +52,16 @@ export class UpdateAuthConfigRequest {
   @IsString()
   @IsOptional()
   ldapUserGroup?: string | null;
+
+  @IsString()
+  @IsOptional()
+  ldapAdminGroup?: string | null;
+
+  @IsString()
+  @IsOptional()
+  ldapEmailField?: string | null;
+
+  @IsString()
+  @IsOptional()
+  ldapNameField?: string | null;
 }

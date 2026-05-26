@@ -13,6 +13,10 @@ export interface AuthConfig {
   ldapBindDn: string | null;
   ldapBindPassword: string | null;
   ldapBaseDn: string | null;
+  ldapUserGroup: string | null;
+  ldapAdminGroup: string | null;
+  ldapEmailField: string | null;
+  ldapNameField: string | null;
 }
 
 export interface IAuthConfigRepository {

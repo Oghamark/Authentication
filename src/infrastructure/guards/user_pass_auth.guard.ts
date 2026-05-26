@@ -8,7 +8,6 @@ import {
 import { IAuthConfigRepository } from 'src/application/interfaces/auth_config_repository';
 import { LocalAuthGuard } from './local_auth.guard';
 import { LdapAuthGuard } from './ldap_auth.guard';
-import { isObservable, lastValueFrom } from 'rxjs';
 
 @Injectable()
 export class UserPassAuthGuard implements CanActivate {
@@ -18,8 +17,6 @@ export class UserPassAuthGuard implements CanActivate {
     @Inject('AuthConfigRepository')
     private authConfigRepository: IAuthConfigRepository,
   ) {}
-
-  private readonly logger = new Logger('UserPassAuthGuard');
 
   async canActivate(context: ExecutionContext) {
     try {
@@ -36,13 +33,6 @@ export class UserPassAuthGuard implements CanActivate {
     }
 
     Logger.debug('Local login failed, falling back to try LDAP');
-    const ldapResult = this.ldapAuthGuard.canActivate(context);
-
-    // This seems to be required because of some nextJS jank? Not sure...
-    if (isObservable(ldapResult)) {
-      return lastValueFrom(ldapResult);
-    } else {
-      return ldapResult;
-    }
+    return this.ldapAuthGuard.canActivate(context);
   }
 }

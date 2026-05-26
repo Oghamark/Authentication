@@ -35,6 +35,10 @@ export class TypeOrmAuthConfigRepository implements IAuthConfigRepository {
         ldapBindDn: null,
         ldapBindPassword: null,
         ldapServerUrl: null,
+        ldapAdminGroup: null,
+        ldapEmailField: null,
+        ldapNameField: null,
+        ldapUserGroup: null,
       });
       await this.repository.save(entity);
     }
@@ -52,6 +56,10 @@ export class TypeOrmAuthConfigRepository implements IAuthConfigRepository {
       ldapBindDn: entity.ldapBindDn,
       ldapBindPassword: entity.ldapBindPassword,
       ldapBaseDn: entity.ldapBaseDn,
+      ldapAdminGroup: entity.ldapAdminGroup,
+      ldapUserGroup: entity.ldapUserGroup,
+      ldapEmailField: entity.ldapEmailField,
+      ldapNameField: entity.ldapNameField,
     });
   }
 
@@ -68,6 +76,15 @@ export class TypeOrmAuthConfigRepository implements IAuthConfigRepository {
         oidcClientSecret: null,
         oidcCallbackUrl: null,
         oidcProviderName: null,
+        ldapEnabled: false,
+        ldapServerUrl: null,
+        ldapBaseDn: null,
+        ldapBindDn: null,
+        ldapBindPassword: null,
+        ldapEmailField: null,
+        ldapNameField: null,
+        ldapAdminGroup: null,
+        ldapUserGroup: null,
       });
     }
 
@@ -111,6 +128,18 @@ export class TypeOrmAuthConfigRepository implements IAuthConfigRepository {
     if (config.ldapServerUrl !== undefined) {
       entity.ldapServerUrl = config.ldapServerUrl;
     }
+    if (config.ldapEmailField !== undefined) {
+      entity.ldapEmailField = config.ldapEmailField;
+    }
+    if (config.ldapNameField !== undefined) {
+      entity.ldapNameField = config.ldapNameField;
+    }
+    if (config.ldapAdminGroup !== undefined) {
+      entity.ldapAdminGroup = config.ldapAdminGroup;
+    }
+    if (config.ldapUserGroup !== undefined) {
+      entity.ldapUserGroup = config.ldapUserGroup;
+    }
 
     await this.repository.save(entity);
 
@@ -127,6 +156,10 @@ export class TypeOrmAuthConfigRepository implements IAuthConfigRepository {
       ldapBindDn: entity.ldapBindDn,
       ldapBindPassword: entity.ldapBindPassword,
       ldapServerUrl: entity.ldapServerUrl,
+      ldapAdminGroup: entity.ldapAdminGroup,
+      ldapUserGroup: entity.ldapUserGroup,
+      ldapEmailField: entity.ldapEmailField,
+      ldapNameField: entity.ldapNameField,
     });
   }
 }
