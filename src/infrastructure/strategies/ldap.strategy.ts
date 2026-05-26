@@ -70,9 +70,10 @@ export class LdapStrategyFactory {
         bindDN: ldapBindDn,
         bindCredentials: ldapBindPassword,
         searchBase: ldapBaseDn,
-        searchFilter: '(sn={{username}})',
+        searchFilter: '(uid={{username}})',
       },
-      usernameField: `sn`,
+      usernameField: `email`,
+      passwordField: `password`,
     };
 
     const strategy: LdapStrategy = new LdapStrategy(options);

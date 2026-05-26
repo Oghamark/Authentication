@@ -49,7 +49,7 @@ export class TypeOrmAuthConfigRepository implements IAuthConfigRepository {
       oidcProviderName: entity.oidcProviderName,
       ldapEnabled: entity.ldapEnabled,
       ldapServerUrl: entity.ldapServerUrl,
-      ldapBindDn: entity.ldapBaseDn,
+      ldapBindDn: entity.ldapBindDn,
       ldapBindPassword: entity.ldapBindPassword,
       ldapBaseDn: entity.ldapBaseDn,
     });
