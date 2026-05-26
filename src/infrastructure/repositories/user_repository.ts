@@ -56,6 +56,7 @@ export class TypeOrmUserRepository implements IUserRepository {
     if (!userEntity) {
       return Result.fail(new UserNotFoundFailure());
     }
+
     const user = UserMapper.toDomain(userEntity);
     return Result.ok(user);
   }

@@ -55,6 +55,16 @@ export class AuthController {
     @Request() request: AuthenticatedRequest,
     @Res({ passthrough: true }) response: Response,
   ) {
+    if (request.user.provider !== 'local') {
+      const res = await this.oidcLoginUseCase.execute(request.user);
+      if (res.isSuccess()) {
+        request.user = res.value!;
+      } else {
+        throw new InternalServerErrorException(
+          `Couldn't get LDAP mapping for user`,
+        );
+      }
+    }
     return await this.handleLogin(request, response);
   }
 

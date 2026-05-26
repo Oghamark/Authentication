@@ -5,6 +5,7 @@ export interface UserPrincipal {
   name: string;
   email: string;
   role: string;
+  provider?: string;
 }
 
 export function toUserPrincipal(user: User): UserPrincipal {
