@@ -73,16 +73,16 @@ Saving valid OIDC credentials registers the strategy immediately — no restart 
 
 ## LDAP
 
-OIDC is configured at runtime via the admin settings UI — no environment variables required. Once logged in as an ADMIN, navigate to **Settings → Single Sign-On** and provide:
+LDAP is configured at runtime via the admin settings UI — no environment variables required. Once logged in as an ADMIN, navigate to **Settings → Single Sign-On** and provide:
 
-- **LDAP Server URL** - The LDAP server URL and port (e.g. `https://my-ldap-server:389`)
+- **LDAP Server URL** - The LDAP server URL and port (e.g. `my-ldap-server:389`)
 - **LDAP Bind DN** - Full CN of Service account for LDAP binding
 - **LDAP Bind Password** - Password for the above service account
 - **LDAP Base DN** - Base DN for user objects (e.g. `dc=example,dc=com`)
 
 Optional fields:
-- **LDAP Email Field** - Which field should the user's email be checked against? Deafults to `mail`
-- **LDAP Name Field** - Which field should the user's name be pulle from? Defaults to `sn`
+- **LDAP Email Field** - Which field should the user's email be checked against? Defaults to `mail`
+- **LDAP Name Field** - Which field should the user's name be pulled from? Defaults to `sn`
 - **LDAP User Group** - If present, users must be a member of this group to login.
 - **LDAP Admin Group** - If present, users belonging to this group will be made admins at first login.
 

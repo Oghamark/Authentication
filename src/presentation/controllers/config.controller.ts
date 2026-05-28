@@ -70,7 +70,6 @@ export class ConfigController {
     const hasLdapFields =
       body.ldapBaseDn !== undefined ||
       body.ldapBindDn !== undefined ||
-      body.ldapUserGroup !== undefined ||
       body.ldapBindPassword !== undefined ||
       body.ldapServerUrl !== undefined ||
       body.ldapEnabled !== undefined ||

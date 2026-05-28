@@ -46,7 +46,9 @@ export class LdapAuthGuard extends AuthGuard('ldap') implements CanActivate {
     }
 
     //eslint-disable-next-line
-    const configResult: Result<AuthConfig> = (context.switchToHttp().getRequest() as any).authConfig;
+    const configResult: Result<AuthConfig> = (
+      context.switchToHttp().getRequest()
+    ).authConfig;
 
     if (configResult.isFailure()) {
       throw new InternalServerErrorException(`Couldn't load auth config`);
@@ -68,7 +70,7 @@ export class LdapAuthGuard extends AuthGuard('ldap') implements CanActivate {
       throw new LDAPPropertiesError('name');
     }
 
-    const user_groups = record.memberOf as Array<string>;
+    const user_groups = (record.memberOf ?? []) as Array<string>;
     if (ldapUserGroup && !user_groups.includes(ldapUserGroup)) {
       throw new UnauthorizedException('User not part of required LDAP group');
     }

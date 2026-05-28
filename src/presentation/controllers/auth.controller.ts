@@ -59,8 +59,7 @@ export class AuthController {
       const res = await this.thirdPartyLoginUseCase.execute(request.user);
       if (res.isSuccess()) {
         if (res.value.role !== request.user.role) {
-          // I could go either way on this debug message.
-          // this.logger.debug('User role does not match third-party role!');
+          this.logger.debug('User role does not match third-party role!');
         }
         request.user = res.value!;
       } else {

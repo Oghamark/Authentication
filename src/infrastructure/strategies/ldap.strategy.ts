@@ -7,9 +7,7 @@ import {
 import { Result } from 'src/core/result';
 import { GenericFailure } from 'src/core/failure';
 import * as passport from 'passport';
-// Annoying commonjs issue with exported overlapping namespace + class...
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-import LdapStrategy = require('passport-ldapauth');
+import * as LdapStrategy from 'passport-ldapauth';
 
 @Injectable()
 export class LdapStrategyFactory {
