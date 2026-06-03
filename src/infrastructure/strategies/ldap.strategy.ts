@@ -8,6 +8,7 @@ import { Result } from 'src/core/result';
 import { GenericFailure } from 'src/core/failure';
 import * as passport from 'passport';
 import * as LdapStrategy from 'passport-ldapauth';
+import LdapPrincipalMapper from '../mappers/ldap_principal.mapper';
 
 @Injectable()
 export class LdapStrategyFactory {
@@ -78,7 +79,20 @@ export class LdapStrategyFactory {
       passwordField: `password`,
     };
 
-    const strategy: LdapStrategy = new LdapStrategy(options);
+    const tryMapUserValue: LdapStrategy.VerifyCallback = (
+      user: any,
+      done: LdapStrategy.VerifyDoneCallback,
+    ) => {
+      try {
+        const principal = LdapPrincipalMapper.toUserPrincipal(user, authConfig);
+        done(null, principal);
+      } catch (error) {
+        done(error, false);
+      }
+    };
+
+    const strategy = new LdapStrategy(options, tryMapUserValue);
+
     // Re-registering with the same name overwrites the old strategy
     passport.use('ldap', strategy);
     this.logger.log('LDAP strategy registered successfully');

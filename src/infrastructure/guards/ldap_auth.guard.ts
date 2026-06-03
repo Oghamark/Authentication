@@ -3,17 +3,13 @@ import {
   ExecutionContext,
   Inject,
   Injectable,
-  InternalServerErrorException,
   UnauthorizedException,
+  Logger,
+  InternalServerErrorException,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import {
-  AuthConfig,
-  IAuthConfigRepository,
-} from 'src/application/interfaces/auth_config_repository';
-import { LDAPPropertiesError } from 'src/domain/exceptions/auth.exceptions';
+import { IAuthConfigRepository } from 'src/application/interfaces/auth_config_repository';
 import { isObservable, lastValueFrom } from 'rxjs';
-import { Result } from 'src/core/result';
 
 @Injectable()
 export class LdapAuthGuard extends AuthGuard('ldap') implements CanActivate {
@@ -24,15 +20,10 @@ export class LdapAuthGuard extends AuthGuard('ldap') implements CanActivate {
     super();
   }
 
+  private readonly logger = new Logger('LdapAuthGuard');
+
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    // This is very ugly, but I can't call this in handleRequest so must to do it here...
-    const configResult = await this.authConfigRepository.get();
-
-    //eslint-disable-next-line
-    (context.switchToHttp().getRequest() as any).authConfig = configResult;
-
     const superResult = await super.canActivate(context);
-
     if (isObservable(superResult)) {
       return lastValueFrom(superResult);
     } else {
@@ -40,50 +31,18 @@ export class LdapAuthGuard extends AuthGuard('ldap') implements CanActivate {
     }
   }
 
-  handleRequest<T>(err: any, user: any, _info: any, context: any): T {
-    if (err || !user) {
+  handleRequest<T>(err: any, user: T): T {
+    if (err) {
+      // Don't return the erorr, could contain secrets.
+      // Do log it for future analysis though.
+      this.logger.error(err);
+      throw new InternalServerErrorException(`Couldn't log in with LDAP`);
+    }
+
+    if (err) {
       throw new UnauthorizedException('Invalid email or password');
     }
 
-    //eslint-disable-next-line
-    const configResult: Result<AuthConfig> = (
-      context.switchToHttp().getRequest()
-    ).authConfig;
-
-    if (configResult.isFailure()) {
-      throw new InternalServerErrorException(`Couldn't load auth config`);
-    }
-
-    const { ldapEmailField, ldapNameField, ldapAdminGroup, ldapUserGroup } =
-      configResult.value!;
-
-    const record = user as Record<string, any>;
-
-    const email = record[ldapEmailField ?? 'mail'] as string | undefined;
-    const name = record[ldapNameField ?? 'sn'] as string | undefined;
-
-    if (!email) {
-      throw new LDAPPropertiesError('email');
-    }
-
-    if (!name) {
-      throw new LDAPPropertiesError('name');
-    }
-
-    const user_groups = (record.memberOf ?? []) as Array<string>;
-    if (ldapUserGroup && !user_groups.includes(ldapUserGroup)) {
-      throw new UnauthorizedException('User not part of required LDAP group');
-    }
-
-    const isAdmin = ldapAdminGroup && user_groups.includes(ldapAdminGroup);
-
-    return {
-      ...user,
-      provider: 'LDAP',
-      email,
-      name,
-      role: isAdmin ? 'ADMIN' : 'USER',
-      id: '',
-    } as T;
+    return user;
   }
 }
