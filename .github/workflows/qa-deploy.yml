@@ -59,8 +59,6 @@ jobs:
             dist/
             node_modules/
             package.json
-            src/data-source.ts
-            src/migrations/
           retention-days: 1
 
   # ─── Debian package ───────────────────────────────────────────────────────────
@@ -104,15 +102,12 @@ jobs:
           install -d pkg/opt/authentication/dist
           install -d pkg/opt/authentication/node_modules
           install -d pkg/opt/authentication/node
-          install -d pkg/opt/authentication/src/migrations
           install -d pkg/etc/default
           install -d pkg/etc/systemd/system
 
           cp -r build/dist/. pkg/opt/authentication/dist/
           cp -r build/node_modules/. pkg/opt/authentication/node_modules/
           cp build/package.json pkg/opt/authentication/package.json
-          cp build/src/data-source.ts pkg/opt/authentication/src/data-source.ts
-          cp -r build/src/migrations/. pkg/opt/authentication/src/migrations/
 
           # Bundle Node.js runtime (only bin/node and lib/)
           cp node-bundle/bin/node pkg/opt/authentication/node/

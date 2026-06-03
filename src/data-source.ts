@@ -1,5 +1,10 @@
 import * as dotenv from 'dotenv';
 import { DataSource } from 'typeorm';
+import {
+  typeOrmEntities,
+  typeOrmMigrations,
+  typeOrmSubscribers,
+} from './infrastructure/database/typeorm-artifacts';
 
 dotenv.config();
 
@@ -14,8 +19,8 @@ export default new DataSource({
   dropSchema: false,
   logging: false,
   logger: 'file',
-  entities: ['dist/**/*.entity{.ts,.js}'],
-  migrations: ['dist/migrations/**/*.js'],
-  subscribers: ['dist/subscriber/**/*.js'],
+  entities: typeOrmEntities,
+  migrations: typeOrmMigrations,
+  subscribers: typeOrmSubscribers,
   migrationsTableName: 'migration_table',
 });
