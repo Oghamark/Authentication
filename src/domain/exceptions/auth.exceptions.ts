@@ -27,3 +27,10 @@ export class SignupDisabledError extends DomainException {
     this.name = 'SignupDisabledError';
   }
 }
+
+export class LDAPPropertiesError extends DomainException {
+  constructor(property: string) {
+    super(`Couldn't determine user property ` + property);
+    this.name = 'LDAPPropertiesError';
+  }
+}

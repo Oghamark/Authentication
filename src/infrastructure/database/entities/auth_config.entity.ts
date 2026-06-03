@@ -25,4 +25,31 @@ export class AuthConfigEntity {
 
   @Column({ name: 'oidc_provider_name', type: 'text', nullable: true })
   oidcProviderName: string | null;
+
+  @Column({ name: 'ldap_enabled', default: false })
+  ldapEnabled: boolean;
+
+  @Column({ name: 'ldap_server_url', type: 'text', nullable: true })
+  ldapServerUrl: string | null;
+
+  @Column({ name: 'ldap_bind_dn', type: 'text', nullable: true })
+  ldapBindDn: string | null;
+
+  @Column({ name: 'ldap_bind_password', type: 'text', nullable: true })
+  ldapBindPassword: string | null;
+
+  @Column({ name: 'ldap_base_dn', type: 'text', nullable: true })
+  ldapBaseDn: string | null;
+
+  @Column({ name: 'ldap_user_group', type: 'text', nullable: true })
+  ldapUserGroup: string | null;
+
+  @Column({ name: 'ldap_admin_group', type: 'text', nullable: true })
+  ldapAdminGroup: string | null;
+
+  @Column({ name: 'ldap_email_field', type: 'text', nullable: true })
+  ldapEmailField: string | null;
+
+  @Column({ name: 'ldap_name_field', type: 'text', nullable: true })
+  ldapNameField: string | null;
 }

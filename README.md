@@ -4,7 +4,7 @@ A self-hosted JWT authentication service built with NestJS and TypeORM. Supports
 
 ## Requirements
 
-- Node.js 20+ 
+- Node.js 20+
 - A PostgreSQL database called "authentication"
 
 ## Installation
@@ -71,6 +71,21 @@ OIDC is configured at runtime via the admin settings UI — no environment varia
 
 Saving valid OIDC credentials registers the strategy immediately — no restart needed. When OIDC is enabled, users who sign in via SSO are automatically created in the database on first login (if sign-up is enabled).
 
+## LDAP
+
+LDAP is configured at runtime via the admin settings UI — no environment variables required. Once logged in as an ADMIN, navigate to **Settings → Single Sign-On** and provide:
+
+- **LDAP Server URL** - The LDAP server URL and port (e.g. `my-ldap-server:389`)
+- **LDAP Bind DN** - Full CN of Service account for LDAP binding
+- **LDAP Bind Password** - Password for the above service account
+- **LDAP Base DN** - Base DN for user objects (e.g. `dc=example,dc=com`)
+
+Optional fields:
+- **LDAP Email Field** - Which field should the user's email be checked against? Defaults to `mail`
+- **LDAP Name Field** - Which field should the user's name be pulled from? Defaults to `sn`
+- **LDAP User Group** - If present, users must be a member of this group to login.
+- **LDAP Admin Group** - If present, users belonging to this group will be made admins at first login.
+
 ## API Reference
 
 All responses follow the shape `{ success: boolean, value?: T, message?: string }`. Tokens are delivered as httpOnly cookies (`access_token`, `refresh_token`).
@@ -93,7 +108,7 @@ All responses follow the shape `{ success: boolean, value?: T, message?: string 
 |--------|------------------|------------|------------------------------------------------------------------|
 | GET    | `/config`        | JWT, ADMIN | Returns full auth configuration (including OIDC secrets).        |
 | PATCH  | `/config`        | JWT, ADMIN | Updates auth configuration. Reloads OIDC strategy if changed.    |
-| GET    | `/config/public` | —          | Returns non-sensitive config: `signupEnabled`, `oidcEnabled`, `oidcProviderName`. |
+| GET    | `/config/public` | —          | Returns non-sensitive config: `signupEnabled`, `oidcEnabled`, `oidcProviderName`, `ldapEnabled`. |
 
 ### Users
 

@@ -12,6 +12,7 @@ interface Jwt {
   name: string;
   email: string;
   role: string;
+  provider: string;
 }
 
 @Injectable()
@@ -33,6 +34,7 @@ export class JwtAccessTokenStrategy extends PassportStrategy(Strategy) {
       name: payload.name,
       email: payload.email,
       role: payload.role,
+      provider: payload.provider, // Doesn't matter here
     });
   }
 }

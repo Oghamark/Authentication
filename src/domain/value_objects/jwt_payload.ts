@@ -4,6 +4,7 @@ export class JwtPayload {
     public readonly name: string,
     public readonly email: string,
     public readonly role: string,
+    public readonly provider: string,
     public readonly issuedAt: Date,
     public readonly expiresAt: Date,
   ) {}
@@ -13,6 +14,7 @@ export class JwtPayload {
     name: string;
     email: string;
     role: string;
+    provider: string;
   }): JwtPayload {
     const now = new Date();
     const expiresAt = new Date(now.getTime() + 15 * 60 * 1000); // 15 minutes
@@ -22,6 +24,7 @@ export class JwtPayload {
       data.name,
       data.email,
       data.role,
+      data.provider,
       now,
       expiresAt,
     );

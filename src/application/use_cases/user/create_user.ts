@@ -47,6 +47,7 @@ export class CreateUserUseCase implements IUseCase<CreateUserRequest, User> {
       email,
       password: hashedPassword,
       role,
+      provider: 'LOCAL',
     });
 
     // Save user to repository

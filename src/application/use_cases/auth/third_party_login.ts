@@ -11,7 +11,7 @@ import { Result } from 'src/core/result';
 import { UserFactory } from 'src/domain/entities/user.factory';
 
 @Injectable()
-export class OidcLoginUseCase implements IUseCase<
+export class ThirdPartyLoginUseCase implements IUseCase<
   UserPrincipal,
   UserPrincipal
 > {
@@ -46,6 +46,7 @@ export class OidcLoginUseCase implements IUseCase<
       name: userPrincipal.name,
       email: userPrincipal.email,
       role: userPrincipal.role,
+      provider: userPrincipal.provider,
     });
 
     const createUserResult = await this.userRepository.save(newUser);

@@ -33,6 +33,7 @@ export class LoginUseCase implements IUseCase<
       name: user.name,
       email: user.email,
       role: user.role,
+      provider: user.provider,
     });
 
     const accessToken = this.tokenGateway.generateAccessToken(payload);
