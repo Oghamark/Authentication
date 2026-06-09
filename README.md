@@ -1,6 +1,6 @@
 # Authentication
 
-A self-hosted JWT authentication service built with NestJS and TypeORM. Supports local (email/password) login and OpenID Connect (OIDC) single sign-on.
+A self-hosted JWT authentication service built with NestJS and TypeORM. Supports local (email/password) login, OpenID Connect (OIDC) single sign-on, and LDAP authentication.
 
 ## Requirements
 
