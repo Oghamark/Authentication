@@ -28,4 +28,40 @@ export class UpdateAuthConfigRequest {
   @IsString()
   @IsOptional()
   oidcProviderName?: string | null;
+
+  @IsBoolean()
+  @IsOptional()
+  ldapEnabled?: boolean;
+
+  @IsString()
+  @IsOptional()
+  ldapServerUrl?: string | null;
+
+  @IsString()
+  @IsOptional()
+  ldapBindDn?: string | null;
+
+  @IsString()
+  @IsOptional()
+  ldapBindPassword?: string | null;
+
+  @IsString()
+  @IsOptional()
+  ldapBaseDn?: string | null;
+
+  @IsString()
+  @IsOptional()
+  ldapUserGroup?: string | null;
+
+  @IsString()
+  @IsOptional()
+  ldapAdminGroup?: string | null;
+
+  @IsString()
+  @IsOptional()
+  ldapEmailField?: string | null;
+
+  @IsString()
+  @IsOptional()
+  ldapNameField?: string | null;
 }

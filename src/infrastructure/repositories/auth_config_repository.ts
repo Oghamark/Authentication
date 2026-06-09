@@ -30,6 +30,15 @@ export class TypeOrmAuthConfigRepository implements IAuthConfigRepository {
         oidcClientSecret: null,
         oidcCallbackUrl: null,
         oidcProviderName: null,
+        ldapEnabled: false,
+        ldapBaseDn: null,
+        ldapBindDn: null,
+        ldapBindPassword: null,
+        ldapServerUrl: null,
+        ldapAdminGroup: null,
+        ldapEmailField: null,
+        ldapNameField: null,
+        ldapUserGroup: null,
       });
       await this.repository.save(entity);
     }
@@ -42,6 +51,15 @@ export class TypeOrmAuthConfigRepository implements IAuthConfigRepository {
       oidcClientSecret: entity.oidcClientSecret,
       oidcCallbackUrl: entity.oidcCallbackUrl,
       oidcProviderName: entity.oidcProviderName,
+      ldapEnabled: entity.ldapEnabled,
+      ldapServerUrl: entity.ldapServerUrl,
+      ldapBindDn: entity.ldapBindDn,
+      ldapBindPassword: entity.ldapBindPassword,
+      ldapBaseDn: entity.ldapBaseDn,
+      ldapAdminGroup: entity.ldapAdminGroup,
+      ldapUserGroup: entity.ldapUserGroup,
+      ldapEmailField: entity.ldapEmailField,
+      ldapNameField: entity.ldapNameField,
     });
   }
 
@@ -58,12 +76,23 @@ export class TypeOrmAuthConfigRepository implements IAuthConfigRepository {
         oidcClientSecret: null,
         oidcCallbackUrl: null,
         oidcProviderName: null,
+        ldapEnabled: false,
+        ldapServerUrl: null,
+        ldapBaseDn: null,
+        ldapBindDn: null,
+        ldapBindPassword: null,
+        ldapEmailField: null,
+        ldapNameField: null,
+        ldapAdminGroup: null,
+        ldapUserGroup: null,
       });
     }
 
     if (config.signupEnabled !== undefined) {
       entity.signupEnabled = config.signupEnabled;
     }
+
+    // OIDC
     if (config.oidcEnabled !== undefined) {
       entity.oidcEnabled = config.oidcEnabled;
     }
@@ -83,6 +112,35 @@ export class TypeOrmAuthConfigRepository implements IAuthConfigRepository {
       entity.oidcProviderName = config.oidcProviderName;
     }
 
+    // LDAP
+    if (config.ldapEnabled !== undefined) {
+      entity.ldapEnabled = config.ldapEnabled;
+    }
+    if (config.ldapBaseDn !== undefined) {
+      entity.ldapBaseDn = config.ldapBaseDn;
+    }
+    if (config.ldapBindDn !== undefined) {
+      entity.ldapBindDn = config.ldapBindDn;
+    }
+    if (config.ldapBindPassword !== undefined) {
+      entity.ldapBindPassword = config.ldapBindPassword;
+    }
+    if (config.ldapServerUrl !== undefined) {
+      entity.ldapServerUrl = config.ldapServerUrl;
+    }
+    if (config.ldapEmailField !== undefined) {
+      entity.ldapEmailField = config.ldapEmailField;
+    }
+    if (config.ldapNameField !== undefined) {
+      entity.ldapNameField = config.ldapNameField;
+    }
+    if (config.ldapAdminGroup !== undefined) {
+      entity.ldapAdminGroup = config.ldapAdminGroup;
+    }
+    if (config.ldapUserGroup !== undefined) {
+      entity.ldapUserGroup = config.ldapUserGroup;
+    }
+
     await this.repository.save(entity);
 
     return Result.ok({
@@ -93,6 +151,15 @@ export class TypeOrmAuthConfigRepository implements IAuthConfigRepository {
       oidcClientSecret: entity.oidcClientSecret,
       oidcCallbackUrl: entity.oidcCallbackUrl,
       oidcProviderName: entity.oidcProviderName,
+      ldapEnabled: entity.ldapEnabled,
+      ldapBaseDn: entity.ldapBaseDn,
+      ldapBindDn: entity.ldapBindDn,
+      ldapBindPassword: entity.ldapBindPassword,
+      ldapServerUrl: entity.ldapServerUrl,
+      ldapAdminGroup: entity.ldapAdminGroup,
+      ldapUserGroup: entity.ldapUserGroup,
+      ldapEmailField: entity.ldapEmailField,
+      ldapNameField: entity.ldapNameField,
     });
   }
 }

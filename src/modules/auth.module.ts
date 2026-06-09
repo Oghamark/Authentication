@@ -13,7 +13,9 @@ import { JwtTokenGateway } from 'src/infrastructure/gateways/jwt_token.gateway';
 import { JwtModule } from '@nestjs/jwt';
 import { AuthController } from 'src/presentation/controllers/auth.controller';
 import { LoginUseCase } from 'src/application/use_cases/auth/login';
-import { OidcLoginUseCase } from 'src/application/use_cases/auth/oidc_login';
+import { ThirdPartyLoginUseCase } from 'src/application/use_cases/auth/third_party_login';
+import { IAuthConfigRepository } from 'src/application/interfaces/auth_config_repository';
+
 import {
   JwtAccessTokenStrategy,
   JwtRefreshTokenStrategy,
@@ -25,9 +27,16 @@ import { GetAuthConfigUseCase } from 'src/application/use_cases/config/get_auth_
 import { LogoutUseCase } from 'src/application/use_cases/auth/logout';
 import { jwtConfig, type JwtConfig } from 'src/infrastructure/config';
 import { OidcStrategyFactory } from 'src/infrastructure/strategies/oidc.strategy';
+import { LdapStrategyFactory } from 'src/infrastructure/strategies/ldap.strategy';
 import { OidcStateService } from 'src/infrastructure/oidc-state.service';
 import { OidcAuthGuard } from 'src/infrastructure/guards/oidc_auth.guard';
 import { OidcExceptionFilter } from 'src/infrastructure/filters/oidc-exception.filter';
+import { GenericFailure } from 'src/core/failure';
+import { Result } from 'src/core/result';
+
+import { Inject } from '@nestjs/common';
+import { LocalAuthGuard } from 'src/infrastructure/guards/local_auth.guard';
+import { LdapAuthGuard } from 'src/infrastructure/guards/ldap_auth.guard';
 
 @Module({
   imports: [
@@ -70,17 +79,21 @@ import { OidcExceptionFilter } from 'src/infrastructure/filters/oidc-exception.f
     JwtRefreshTokenStrategy,
     OidcStrategyFactory,
     OidcAuthGuard,
+    LocalAuthGuard,
+    LdapAuthGuard,
     // OIDC state service for managing returnTo state between start and callback
     OidcStateService,
     // Exception filter to map OIDC errors to redirects or JSON
     OidcExceptionFilter,
+
+    LdapStrategyFactory,
 
     // Use cases
     CreateUserUseCase,
     GetAuthConfigUseCase,
     LoginUseCase,
     LogoutUseCase,
-    OidcLoginUseCase,
+    ThirdPartyLoginUseCase,
     ValidateUserUseCase,
     VerifyRefreshTokenUseCase,
   ],
@@ -91,12 +104,26 @@ import { OidcExceptionFilter } from 'src/infrastructure/filters/oidc-exception.f
     'CryptoGateway',
     'AuthConfigRepository',
     OidcStrategyFactory,
+    LdapStrategyFactory,
   ],
 })
 export class AuthModule {
-  constructor(private oidcStrategyFactory: OidcStrategyFactory) {}
+  constructor(
+    private oidcStrategyFactory: OidcStrategyFactory,
+    private ldapStrategyFactory: LdapStrategyFactory,
+    @Inject('AuthConfigRepository')
+    private readonly authConfigRepository: IAuthConfigRepository,
+  ) {}
 
   async onModuleInit() {
-    await this.oidcStrategyFactory.createStrategy();
+    const configResult = await this.authConfigRepository.get();
+    if (configResult.isFailure()) {
+      return Result.fail(new GenericFailure('Failed to load auth config'));
+    } else {
+      const authConfig = configResult.value!;
+
+      await this.oidcStrategyFactory.createStrategy(authConfig);
+      await this.ldapStrategyFactory.createStrategy(authConfig);
+    }
   }
 }

@@ -1,5 +1,10 @@
 import * as dotenv from 'dotenv';
 import { DataSource } from 'typeorm';
+import {
+  typeOrmEntities,
+  typeOrmMigrations,
+  typeOrmSubscribers,
+} from './infrastructure/database/typeorm-artifacts';
 
 dotenv.config();
 
@@ -9,13 +14,13 @@ export default new DataSource({
   port: +process.env.DATABASE_PORT!,
   username: process.env.DATABASE_USERNAME,
   password: process.env.DATABASE_PASSWORD,
-  database: 'authentication',
+  database: process.env.DATABASE_NAME,
   synchronize: false,
   dropSchema: false,
   logging: false,
   logger: 'file',
-  entities: ['dist/**/*.entity{.ts,.js}'],
-  migrations: ['dist/migrations/**/*.js'],
-  subscribers: ['dist/subscriber/**/*.js'],
+  entities: typeOrmEntities,
+  migrations: typeOrmMigrations,
+  subscribers: typeOrmSubscribers,
   migrationsTableName: 'migration_table',
 });

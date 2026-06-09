@@ -14,7 +14,7 @@ import {
 } from '@nestjs/common';
 import { OidcExceptionFilter } from 'src/infrastructure/filters/oidc-exception.filter';
 import { LoginUseCase } from 'src/application/use_cases/auth/login';
-import { OidcLoginUseCase } from 'src/application/use_cases/auth/oidc_login';
+import { ThirdPartyLoginUseCase } from 'src/application/use_cases/auth/third_party_login';
 import { AuthenticatedRequest } from 'src/application/dtos/auth/authenticated_request';
 import { CreateUserRequest } from 'src/application/dtos/user/create_user_request';
 import { GetAuthConfigUseCase } from 'src/application/use_cases/config/get_auth_config';
@@ -26,7 +26,6 @@ import {
 import { Response } from 'express';
 import { OidcStateService } from 'src/infrastructure/oidc-state.service';
 import { LogoutUseCase } from 'src/application/use_cases/auth/logout';
-import { LocalAuthGuard } from 'src/infrastructure/guards/local_auth.guard';
 import { OidcAuthGuard } from 'src/infrastructure/guards/oidc_auth.guard';
 import {
   JwtAuthGuard,
@@ -34,13 +33,14 @@ import {
 } from 'src/infrastructure/guards/jwt_auth.guard';
 import { CurrentUser } from 'src/infrastructure/decorators/current_user.decorator';
 import { Cookie } from 'src/infrastructure/decorators/cookie.decorator';
+import { UserPassAuthGuard } from 'src/infrastructure/guards/user_pass_auth.guard';
 
 @UseFilters(OidcExceptionFilter)
 @Controller()
 export class AuthController {
   constructor(
     private createUserUseCase: CreateUserUseCase,
-    private oidcLoginUseCase: OidcLoginUseCase,
+    private thirdPartyLoginUseCase: ThirdPartyLoginUseCase,
     private loginUseCase: LoginUseCase,
     private getAuthConfigUseCase: GetAuthConfigUseCase,
     private logoutUseCase: LogoutUseCase,
@@ -49,12 +49,25 @@ export class AuthController {
 
   private readonly logger = new Logger('AuthController');
 
-  @UseGuards(LocalAuthGuard)
+  @UseGuards(UserPassAuthGuard)
   @Post('login')
   async login(
     @Request() request: AuthenticatedRequest,
     @Res({ passthrough: true }) response: Response,
   ) {
+    if (request.user.provider !== 'LOCAL') {
+      const res = await this.thirdPartyLoginUseCase.execute(request.user);
+      if (res.isSuccess()) {
+        if (res.value.role !== request.user.role) {
+          this.logger.debug('User role does not match third-party role!');
+        }
+        request.user = res.value!;
+      } else {
+        throw new InternalServerErrorException(
+          `Couldn't get LDAP mapping for user`,
+        );
+      }
+    }
     return await this.handleLogin(request, response);
   }
 
@@ -71,7 +84,9 @@ export class AuthController {
     @Res({ passthrough: true }) response: Response,
   ) {
     // Find or create the user in the database from the OIDC identity
-    const oidcLoginResult = await this.oidcLoginUseCase.execute(request.user);
+    const oidcLoginResult = await this.thirdPartyLoginUseCase.execute(
+      request.user,
+    );
 
     if (oidcLoginResult.isFailure()) {
       throw new InternalServerErrorException('Failed to process OIDC login');

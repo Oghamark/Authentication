@@ -6,6 +6,7 @@ import { JwtAuthGuard } from 'src/infrastructure/guards/jwt_auth.guard';
 import { Roles } from 'src/infrastructure/decorators/roles.decorator';
 import { UpdateAuthConfigRequest } from 'src/application/dtos/config/update_auth_config_request';
 import { OidcStrategyFactory } from 'src/infrastructure/strategies/oidc.strategy';
+import { LdapStrategyFactory } from 'src/infrastructure/strategies/ldap.strategy';
 
 @Controller('config')
 export class ConfigController {
@@ -13,6 +14,7 @@ export class ConfigController {
     private readonly getAuthConfigUseCase: GetAuthConfigUseCase,
     private readonly updateAuthConfigUseCase: UpdateAuthConfigUseCase,
     private readonly oidcStrategyFactory: OidcStrategyFactory,
+    private readonly ldapStrategyFactory: LdapStrategyFactory,
   ) {}
 
   @Get()
@@ -37,10 +39,12 @@ export class ConfigController {
       return { success: false, message: result.failure?.message };
     }
 
-    const { signupEnabled, oidcEnabled, oidcProviderName } = result.value!;
+    const { signupEnabled, oidcEnabled, oidcProviderName, ldapEnabled } =
+      result.value!;
+
     return {
       success: true,
-      value: { signupEnabled, oidcProviderName, oidcEnabled },
+      value: { signupEnabled, oidcProviderName, oidcEnabled, ldapEnabled },
     };
   }
 
@@ -60,7 +64,22 @@ export class ConfigController {
       body.oidcClientSecret !== undefined;
 
     if (hasOidcFields) {
-      await this.oidcStrategyFactory.recreateStrategy();
+      await this.oidcStrategyFactory.recreateStrategy(result.value!);
+    }
+
+    const hasLdapFields =
+      body.ldapBaseDn !== undefined ||
+      body.ldapBindDn !== undefined ||
+      body.ldapBindPassword !== undefined ||
+      body.ldapServerUrl !== undefined ||
+      body.ldapEnabled !== undefined ||
+      body.ldapNameField !== undefined ||
+      body.ldapEmailField !== undefined ||
+      body.ldapUserGroup !== undefined ||
+      body.ldapAdminGroup !== undefined;
+
+    if (hasLdapFields) {
+      await this.ldapStrategyFactory.recreateStrategy(result.value!);
     }
 
     return { success: true, value: result.value };
