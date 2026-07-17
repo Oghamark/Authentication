@@ -78,15 +78,19 @@ export class OidcAuthGuard implements CanActivate {
         return response;
       } as Response['redirect'];
 
-      // If frontend provided a returnTo query param, store it in a short-lived
-      // server-side map and pass the generated state to the OIDC provider.
+      // If frontend/native client provided a return target query param, store it
+      // in a short-lived server-side map and pass the generated state to OIDC.
       let state: string | undefined;
       try {
-        if (
-          request.query['returnTo'] &&
+        const requestedReturnTo =
           typeof request.query['returnTo'] === 'string'
-        ) {
-          state = this.oidcStateService.create(request.query['returnTo']);
+            ? request.query['returnTo']
+            : typeof request.query['redirectUri'] === 'string'
+              ? request.query['redirectUri']
+              : undefined;
+
+        if (requestedReturnTo) {
+          state = this.oidcStateService.create(requestedReturnTo);
         }
       } catch {
         // ignore and continue without state

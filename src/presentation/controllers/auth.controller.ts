@@ -102,7 +102,7 @@ export class AuthController {
     const returnTo = this.oidcStateService.consume(
       request.query.state as string,
     );
-    if (returnTo && returnTo.startsWith('/') && !returnTo.startsWith('//')) {
+    if (this.oidcStateService.isAllowedReturnTo(returnTo)) {
       response.redirect(returnTo);
       return;
     }

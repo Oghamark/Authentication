@@ -26,7 +26,7 @@ export class OidcExceptionFilter implements ExceptionFilter {
     const returnTo = this.oidcStateService.consume(state);
 
     if (exception instanceof RegistrationDisabledException) {
-      if (returnTo && returnTo.startsWith('/') && !returnTo.startsWith('//')) {
+      if (this.oidcStateService.isAllowedReturnTo(returnTo)) {
         const sep = returnTo.includes('?') ? '&' : '?';
         response.redirect(
           `${returnTo}${sep}error=Registration%20not%20allowed`,
@@ -43,7 +43,7 @@ export class OidcExceptionFilter implements ExceptionFilter {
     }
 
     // Generic handling for other exceptions during OIDC callback
-    if (returnTo && returnTo.startsWith('/') && !returnTo.startsWith('//')) {
+    if (this.oidcStateService.isAllowedReturnTo(returnTo)) {
       this.logger.error(
         exception.message ?? 'Something went wrong during OIDC callback',
       );
