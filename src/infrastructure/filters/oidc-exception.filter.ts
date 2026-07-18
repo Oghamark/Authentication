@@ -10,6 +10,10 @@ import { OidcStateService } from 'src/infrastructure/oidc-state.service';
 import { RegistrationDisabledException } from 'src/infrastructure/registration-disabled.exception';
 import { Request, Response } from 'express';
 
+type OidcReturnContext = {
+  returnTo: string;
+};
+
 @Catch()
 @Injectable()
 export class OidcExceptionFilter implements ExceptionFilter {
@@ -22,9 +26,14 @@ export class OidcExceptionFilter implements ExceptionFilter {
     const request = context.getRequest<Request>();
     const response = context.getResponse<Response>();
 
-    const state = request.query.state as string;
-    const stateEntry = this.oidcStateService.consume(state);
-    const returnTo = stateEntry?.returnTo ?? null;
+    const session = request.session as unknown as Record<string, unknown>;
+    const rawContext = session['homebranch:oidc'];
+    delete session['homebranch:oidc'];
+    const contextEntry =
+      rawContext && typeof rawContext === 'object'
+        ? (rawContext as OidcReturnContext)
+        : null;
+    const returnTo = contextEntry?.returnTo ?? null;
 
     if (exception instanceof RegistrationDisabledException) {
       if (this.oidcStateService.isAllowedReturnTo(returnTo)) {

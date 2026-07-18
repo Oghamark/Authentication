@@ -9,7 +9,6 @@ import { Request, Response } from 'express';
 import * as passport from 'passport';
 import { UserPrincipal } from 'src/application/dtos/user/user_principal';
 import { IAuthConfigRepository } from 'src/application/interfaces/auth_config_repository';
-import { OidcStateService } from 'src/infrastructure/oidc-state.service';
 
 type AuthenticateMiddleware = (
   req: Request,
@@ -17,12 +16,17 @@ type AuthenticateMiddleware = (
   next: (err?: Error) => void,
 ) => void;
 
+type OidcReturnContext = {
+  returnTo: string;
+  codeChallenge?: string;
+  codeChallengeMethod?: string;
+};
+
 @Injectable()
 export class OidcAuthGuard implements CanActivate {
   constructor(
     @Inject('AuthConfigRepository')
     private readonly authConfigRepository: IAuthConfigRepository,
-    private readonly oidcStateService: OidcStateService,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -78,9 +82,8 @@ export class OidcAuthGuard implements CanActivate {
         return response;
       } as Response['redirect'];
 
-      // If frontend/native client provided a return target query param, store it
-      // in a short-lived server-side map and pass the generated state to OIDC.
-      let state: string | undefined;
+      // Persist return target and PKCE context in the server session.
+      // Do not override the OIDC state value — passport/openid-client manages that.
       try {
         const requestedReturnTo =
           typeof request.query['returnTo'] === 'string'
@@ -98,21 +101,21 @@ export class OidcAuthGuard implements CanActivate {
             typeof request.query['code_challenge_method'] === 'string'
               ? request.query['code_challenge_method']
               : undefined;
-          state = this.oidcStateService.create(
-            requestedReturnTo,
+          const context: OidcReturnContext = {
+            returnTo: requestedReturnTo,
             codeChallenge,
             codeChallengeMethod,
-          );
+          };
+          (request.session as unknown as Record<string, unknown>)[
+            'homebranch:oidc'
+          ] = context;
         }
       } catch {
         // ignore and continue without state
       }
 
-      const authOptions = state ? { state } : {};
-
       const authenticate: AuthenticateMiddleware = passport.authenticate(
         'oidc',
-        authOptions,
       ) as AuthenticateMiddleware;
 
       authenticate(request, response, (err?: Error) => {

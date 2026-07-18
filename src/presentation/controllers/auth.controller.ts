@@ -37,6 +37,12 @@ import { CurrentUser } from 'src/infrastructure/decorators/current_user.decorato
 import { Cookie } from 'src/infrastructure/decorators/cookie.decorator';
 import { UserPassAuthGuard } from 'src/infrastructure/guards/user_pass_auth.guard';
 
+type OidcReturnContext = {
+  returnTo: string;
+  codeChallenge?: string;
+  codeChallengeMethod?: string;
+};
+
 @UseFilters(OidcExceptionFilter)
 @Controller()
 export class AuthController {
@@ -98,10 +104,13 @@ export class AuthController {
     // Replace the OIDC principal with the DB-backed principal (has correct user ID)
     request.user = oidcLoginResult.value!;
 
-    // Consume the OIDC state to get returnTo and any PKCE parameters
-    const stateEntry = this.oidcStateService.consume(
-      request.query.state as string,
-    );
+    const session = request.session as unknown as Record<string, unknown>;
+    const rawContext = session['homebranch:oidc'];
+    delete session['homebranch:oidc'];
+    const stateEntry =
+      rawContext && typeof rawContext === 'object'
+        ? (rawContext as OidcReturnContext)
+        : null;
 
     if (
       stateEntry &&
