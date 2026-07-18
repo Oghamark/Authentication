@@ -3,6 +3,7 @@ import {
   Request,
   Post,
   UnauthorizedException,
+  BadRequestException,
   Body,
   Res,
   InternalServerErrorException,
@@ -25,6 +26,7 @@ import {
 } from 'src/application/dtos/user/user_principal';
 import { Response } from 'express';
 import { OidcStateService } from 'src/infrastructure/oidc-state.service';
+import { PkceAuthorizationCodeService } from 'src/infrastructure/pkce-authorization-code.service';
 import { LogoutUseCase } from 'src/application/use_cases/auth/logout';
 import { OidcAuthGuard } from 'src/infrastructure/guards/oidc_auth.guard';
 import {
@@ -45,6 +47,7 @@ export class AuthController {
     private getAuthConfigUseCase: GetAuthConfigUseCase,
     private logoutUseCase: LogoutUseCase,
     private readonly oidcStateService: OidcStateService,
+    private readonly pkceAuthorizationCodeService: PkceAuthorizationCodeService,
   ) {}
 
   private readonly logger = new Logger('AuthController');
@@ -95,20 +98,68 @@ export class AuthController {
     // Replace the OIDC principal with the DB-backed principal (has correct user ID)
     request.user = oidcLoginResult.value!;
 
-    // Generate cookies / tokens
-    await this.handleLogin(request, response);
-
-    // If the OIDC start included a returnTo, consume it and redirect the user there.
-    const returnTo = this.oidcStateService.consume(
+    // Consume the OIDC state to get returnTo and any PKCE parameters
+    const stateEntry = this.oidcStateService.consume(
       request.query.state as string,
     );
-    if (this.oidcStateService.isAllowedReturnTo(returnTo)) {
-      response.redirect(returnTo);
+
+    if (
+      stateEntry &&
+      this.oidcStateService.isAllowedReturnTo(stateEntry.returnTo)
+    ) {
+      if (this.oidcStateService.isNativeReturnTo(stateEntry.returnTo)) {
+        // Native app PKCE flow (RFC 8252): issue an authorization code instead of
+        // tokens so the access token never appears in a URL.
+        if (!stateEntry.codeChallenge) {
+          throw new BadRequestException(
+            'code_challenge is required for native OIDC flows',
+          );
+        }
+        const code = this.pkceAuthorizationCodeService.create(
+          request.user,
+          stateEntry.codeChallenge,
+        );
+        const sep = stateEntry.returnTo.includes('?') ? '&' : '?';
+        response.redirect(
+          `${stateEntry.returnTo}${sep}code=${encodeURIComponent(code)}`,
+        );
+        return;
+      }
+
+      // Web client: generate cookies as usual, then redirect
+      await this.handleLogin(request, response);
+      response.redirect(stateEntry.returnTo);
       return;
     }
 
-    // Default JSON response when no redirect is requested
-    return { success: true, value: { message: 'Logged in via OIDC' } };
+    // Default JSON response when no redirect is requested (browser direct call)
+    return await this.handleLogin(request, response);
+  }
+
+  /**
+   * PKCE token exchange endpoint for native app clients (RFC 8252).
+   * Validates the authorization code and PKCE verifier, then issues tokens.
+   */
+  @Post('token')
+  async exchangeToken(
+    @Body() body: { code: string; codeVerifier: string },
+    @Res({ passthrough: true }) response: Response,
+  ) {
+    if (!body.code || !body.codeVerifier) {
+      throw new BadRequestException('code and codeVerifier are required');
+    }
+
+    const user = this.pkceAuthorizationCodeService.consume(
+      body.code,
+      body.codeVerifier,
+    );
+
+    if (!user) {
+      throw new UnauthorizedException('Invalid or expired authorization code');
+    }
+
+    const fakeRequest = { user } as AuthenticatedRequest;
+    return await this.handleLogin(fakeRequest, response);
   }
 
   @Post('sign-up')

@@ -29,6 +29,7 @@ import { jwtConfig, type JwtConfig } from 'src/infrastructure/config';
 import { OidcStrategyFactory } from 'src/infrastructure/strategies/oidc.strategy';
 import { LdapStrategyFactory } from 'src/infrastructure/strategies/ldap.strategy';
 import { OidcStateService } from 'src/infrastructure/oidc-state.service';
+import { PkceAuthorizationCodeService } from 'src/infrastructure/pkce-authorization-code.service';
 import { OidcAuthGuard } from 'src/infrastructure/guards/oidc_auth.guard';
 import { OidcExceptionFilter } from 'src/infrastructure/filters/oidc-exception.filter';
 import { GenericFailure } from 'src/core/failure';
@@ -83,6 +84,8 @@ import { LdapAuthGuard } from 'src/infrastructure/guards/ldap_auth.guard';
     LdapAuthGuard,
     // OIDC state service for managing returnTo state between start and callback
     OidcStateService,
+    // PKCE authorization code service for native app token exchange (RFC 8252)
+    PkceAuthorizationCodeService,
     // Exception filter to map OIDC errors to redirects or JSON
     OidcExceptionFilter,
 

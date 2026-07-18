@@ -2,7 +2,18 @@ import { Inject, Injectable } from '@nestjs/common';
 import * as crypto from 'crypto';
 import { AppConfig, appConfig } from 'src/infrastructure/config';
 
-type Entry = { returnTo: string; expiresAt: number };
+type Entry = {
+  returnTo: string;
+  codeChallenge?: string;
+  codeChallengeMethod?: string;
+  expiresAt: number;
+};
+
+export type StateResult = {
+  returnTo: string;
+  codeChallenge?: string;
+  codeChallengeMethod?: string;
+};
 
 @Injectable()
 export class OidcStateService {
@@ -14,11 +25,17 @@ export class OidcStateService {
   private store = new Map<string, Entry>();
   private readonly ttl = 5 * 60 * 1000; // 5 minutes
 
-  create(returnTo?: string): string {
+  create(
+    returnTo?: string,
+    codeChallenge?: string,
+    codeChallengeMethod?: string,
+  ): string {
     const state = crypto.randomBytes(16).toString('hex');
     const normalizedReturnTo = this.normalizeReturnTo(returnTo) ?? '/';
     const entry: Entry = {
       returnTo: normalizedReturnTo,
+      codeChallenge,
+      codeChallengeMethod,
       expiresAt: Date.now() + this.ttl,
     };
     this.store.set(state, entry);
@@ -27,7 +44,7 @@ export class OidcStateService {
     return state;
   }
 
-  consume(state?: string): string | null {
+  consume(state?: string): StateResult | null {
     if (!state) return null;
     const entry = this.store.get(state);
     if (!entry) return null;
@@ -36,7 +53,11 @@ export class OidcStateService {
       return null;
     }
     this.store.delete(state);
-    return entry.returnTo;
+    return {
+      returnTo: entry.returnTo,
+      codeChallenge: entry.codeChallenge,
+      codeChallengeMethod: entry.codeChallengeMethod,
+    };
   }
 
   isAllowedReturnTo(returnTo: string | null | undefined): returnTo is string {
@@ -45,6 +66,22 @@ export class OidcStateService {
     }
 
     return this.normalizeReturnTo(returnTo) === returnTo;
+  }
+
+  isNativeReturnTo(returnTo: string | null | undefined): returnTo is string {
+    if (!returnTo) {
+      return false;
+    }
+
+    let parsed: URL;
+    try {
+      parsed = new URL(returnTo);
+    } catch {
+      return false;
+    }
+
+    const protocol = parsed.protocol.replace(':', '').toLowerCase();
+    return this.config.nativeRedirectUriSchemes.includes(protocol);
   }
 
   private normalizeReturnTo(returnTo?: string): string | null {

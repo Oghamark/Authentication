@@ -90,7 +90,19 @@ export class OidcAuthGuard implements CanActivate {
               : undefined;
 
         if (requestedReturnTo) {
-          state = this.oidcStateService.create(requestedReturnTo);
+          const codeChallenge =
+            typeof request.query['code_challenge'] === 'string'
+              ? request.query['code_challenge']
+              : undefined;
+          const codeChallengeMethod =
+            typeof request.query['code_challenge_method'] === 'string'
+              ? request.query['code_challenge_method']
+              : undefined;
+          state = this.oidcStateService.create(
+            requestedReturnTo,
+            codeChallenge,
+            codeChallengeMethod,
+          );
         }
       } catch {
         // ignore and continue without state

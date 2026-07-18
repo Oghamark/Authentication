@@ -23,7 +23,8 @@ export class OidcExceptionFilter implements ExceptionFilter {
     const response = context.getResponse<Response>();
 
     const state = request.query.state as string;
-    const returnTo = this.oidcStateService.consume(state);
+    const stateEntry = this.oidcStateService.consume(state);
+    const returnTo = stateEntry?.returnTo ?? null;
 
     if (exception instanceof RegistrationDisabledException) {
       if (this.oidcStateService.isAllowedReturnTo(returnTo)) {
