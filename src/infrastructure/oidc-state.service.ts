@@ -1,17 +1,41 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import * as crypto from 'crypto';
+import { AppConfig, appConfig } from 'src/infrastructure/config';
 
-type Entry = { returnTo: string; expiresAt: number };
+type Entry = {
+  returnTo: string;
+  codeChallenge?: string;
+  codeChallengeMethod?: string;
+  expiresAt: number;
+};
+
+export type StateResult = {
+  returnTo: string;
+  codeChallenge?: string;
+  codeChallengeMethod?: string;
+};
 
 @Injectable()
 export class OidcStateService {
+  constructor(
+    @Inject(appConfig.KEY)
+    private readonly config: AppConfig,
+  ) {}
+
   private store = new Map<string, Entry>();
   private readonly ttl = 5 * 60 * 1000; // 5 minutes
 
-  create(returnTo?: string): string {
+  create(
+    returnTo?: string,
+    codeChallenge?: string,
+    codeChallengeMethod?: string,
+  ): string {
     const state = crypto.randomBytes(16).toString('hex');
+    const normalizedReturnTo = this.normalizeReturnTo(returnTo) ?? '/';
     const entry: Entry = {
-      returnTo: returnTo ?? '/',
+      returnTo: normalizedReturnTo,
+      codeChallenge,
+      codeChallengeMethod,
       expiresAt: Date.now() + this.ttl,
     };
     this.store.set(state, entry);
@@ -20,7 +44,7 @@ export class OidcStateService {
     return state;
   }
 
-  consume(state?: string): string | null {
+  consume(state?: string): StateResult | null {
     if (!state) return null;
     const entry = this.store.get(state);
     if (!entry) return null;
@@ -29,6 +53,77 @@ export class OidcStateService {
       return null;
     }
     this.store.delete(state);
-    return entry.returnTo;
+    return {
+      returnTo: entry.returnTo,
+      codeChallenge: entry.codeChallenge,
+      codeChallengeMethod: entry.codeChallengeMethod,
+    };
+  }
+
+  isAllowedReturnTo(returnTo: string | null | undefined): returnTo is string {
+    if (!returnTo) {
+      return false;
+    }
+
+    return this.normalizeReturnTo(returnTo) === returnTo;
+  }
+
+  isNativeReturnTo(returnTo: string | null | undefined): returnTo is string {
+    if (!returnTo) {
+      return false;
+    }
+
+    let parsed: URL;
+    try {
+      parsed = new URL(returnTo);
+    } catch {
+      return false;
+    }
+
+    const protocol = parsed.protocol.replace(':', '').toLowerCase();
+    return this.config.nativeRedirectUriSchemes.includes(protocol);
+  }
+
+  private normalizeReturnTo(returnTo?: string): string | null {
+    if (!returnTo || !returnTo.trim()) {
+      return '/';
+    }
+
+    const candidate = returnTo.trim();
+    if (this.isSafeRelativePath(candidate)) {
+      return candidate;
+    }
+
+    return this.isAllowedAbsoluteRedirect(candidate) ? candidate : null;
+  }
+
+  private isSafeRelativePath(path: string): boolean {
+    return path.startsWith('/') && !path.startsWith('//');
+  }
+
+  private isAllowedAbsoluteRedirect(target: string): boolean {
+    let parsed: URL;
+    try {
+      parsed = new URL(target);
+    } catch {
+      return false;
+    }
+
+    const protocol = parsed.protocol.replace(':', '').toLowerCase();
+    if (this.config.nativeRedirectUriSchemes.includes(protocol)) {
+      return true;
+    }
+
+    let appUrl: URL;
+    try {
+      appUrl = new URL(this.config.appUrl);
+    } catch {
+      return false;
+    }
+
+    return (
+      (parsed.protocol === 'http:' || parsed.protocol === 'https:') &&
+      parsed.origin === appUrl.origin
+    );
   }
 }

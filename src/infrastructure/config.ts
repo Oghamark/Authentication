@@ -5,6 +5,12 @@ export const appConfig = registerAs('app', () => ({
   port: parseInt(process.env.PORT ?? '3000', 10),
   nodeEnv: process.env.NODE_ENV || 'development',
   appUrl: process.env.APP_URL || 'http://localhost:3000',
+  nativeRedirectUriSchemes: (
+    process.env.NATIVE_REDIRECT_URI_SCHEMES ?? 'homebranch'
+  )
+    .split(',')
+    .map((scheme) => scheme.trim().toLowerCase())
+    .filter((scheme) => scheme.length > 0),
 }));
 
 export const jwtConfig = registerAs('jwt', () => ({

@@ -23,6 +23,7 @@ A self-hosted JWT authentication service built with NestJS and TypeORM. Supports
    | `SESSION_SECRET`         | Yes      | Secret for server-side session storage (required for OIDC)               |
    | `APP_URL`                | Yes      | Public base URL of this service (e.g. `http://localhost:3000`)           |
    | `CORS_ORIGIN`            | Yes      | Allowed CORS origin (e.g. `http://localhost:5173`)                       |
+   | `NATIVE_REDIRECT_URI_SCHEMES` | No  | Comma-separated allowed native URI schemes for OIDC return targets (default: `homebranch`) |
    | `JWT_ACCESS_EXPIRATION`  | No       | Access token lifetime — duration string or seconds (default: `15m`)     |
    | `JWT_REFRESH_EXPIRATION` | No       | Refresh token lifetime — duration string or seconds (default: `7d`)     |
    | `PORT`                   | No       | Port for the service (default: `3000`)                                   |
@@ -71,6 +72,14 @@ OIDC is configured at runtime via the admin settings UI — no environment varia
 
 Saving valid OIDC credentials registers the strategy immediately — no restart needed. When OIDC is enabled, users who sign in via SSO are automatically created in the database on first login (if sign-up is enabled).
 
+To control where users are sent after successful OIDC login, pass either:
+- `returnTo` (web, typically a relative path like `/oidc-callback`)
+- `redirectUri` (native clients, e.g. `homebranch://callback`)
+
+Absolute return targets are restricted to:
+- URI schemes listed in `NATIVE_REDIRECT_URI_SCHEMES`
+- or same-origin `http(s)` URLs matching `APP_URL`
+
 ## LDAP
 
 LDAP is configured at runtime via the admin settings UI — no environment variables required. Once logged in as an ADMIN, navigate to **Settings → Single Sign-On** and provide:
@@ -100,6 +109,7 @@ All responses follow the shape `{ success: boolean, value?: T, message?: string 
 | POST   | `/refresh`              | Refresh token     | Issues new token pair; rotates the refresh token.    |
 | POST   | `/refresh/invalidate`   | JWT               | Revokes the current refresh token and clears cookies.|
 | GET    | `/login/oidc`           | —                 | Initiates the OIDC authorization flow.               |
+| GET    | `/login`                | —                 | Alias for `/login/oidc` (useful for native clients). |
 | GET    | `/login/oidc/callback`  | —                 | OIDC provider callback. Sets token cookies.          |
 
 ### Configuration
