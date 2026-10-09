@@ -13,7 +13,10 @@ async function bootstrap() {
 
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
     logger: ['error', 'warn', 'log', 'debug'],
-    cors: { origin: process.env.CORS_ORIGIN, credentials: true },
+    cors: {
+      origin: process.env.CORS_ORIGIN?.split(',').map((o) => o.trim()),
+      credentials: true,
+    },
   });
 
   // Trust the first proxy hop so Express sees the correct protocol and IP
