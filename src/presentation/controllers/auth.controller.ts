@@ -172,8 +172,10 @@ export class AuthController {
   }
 
   @Post('sign-up')
-  async signUp(@Body() body: CreateUserRequest) {
-    // TODO: Investigate why no response is returned on sign up
+  async signUp(
+    @Body() body: CreateUserRequest,
+    @Res({ passthrough: true }) response: Response,
+  ) {
     this.logger.debug('Sign Up');
     const getAuthConfigResult = await this.getAuthConfigUseCase.execute();
     this.logger.debug(
@@ -203,24 +205,10 @@ export class AuthController {
 
     const user = toUserPrincipal(createUserResult.value!);
 
-    const loginResult = await this.loginUseCase.execute({
-      user,
-    } as AuthenticatedRequest);
-
-    if (loginResult.isFailure()) {
-      this.logger.error(
-        'User created but failed to log in: ' + loginResult.failure.message,
-      );
-      throw new UnauthorizedException('User created but failed to log in');
-    }
-    const loginResponse = loginResult.value!;
-
-    this.logger.debug(
-      'User created and logged in successfully: ' +
-        JSON.stringify(loginResponse),
+    return await this.handleLogin(
+      { user } as AuthenticatedRequest,
+      response,
     );
-
-    return { success: true, value: loginResponse };
   }
 
   /**
