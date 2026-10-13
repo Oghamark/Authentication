@@ -205,10 +205,7 @@ export class AuthController {
 
     const user = toUserPrincipal(createUserResult.value!);
 
-    return await this.handleLogin(
-      { user } as AuthenticatedRequest,
-      response,
-    );
+    return await this.handleLogin({ user } as AuthenticatedRequest, response);
   }
 
   /**
