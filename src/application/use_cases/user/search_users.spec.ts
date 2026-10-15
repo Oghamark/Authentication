@@ -23,12 +23,12 @@ describe('SearchUsersUseCase', () => {
     expect(result.value).toEqual(users);
   });
 
-  it.each(['', ' ', 'a', ' a '])(
-    'rejects a query shorter than two trimmed characters: %p',
+  it.each(['', ' ', 'a', ' a ', ['foo']])(
+    'rejects an invalid query value: %p',
     async (query) => {
-      await expect(useCase.execute({ query })).rejects.toBeInstanceOf(
-        BadRequestException,
-      );
+      await expect(
+        useCase.execute({ query } as { query: unknown } as never),
+      ).rejects.toBeInstanceOf(BadRequestException);
       expect(userRepository.search).not.toHaveBeenCalled();
     },
   );

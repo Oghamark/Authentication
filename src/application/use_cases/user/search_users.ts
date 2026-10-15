@@ -19,7 +19,11 @@ export class SearchUsersUseCase implements IUseCase<
   ) {}
 
   async execute({ query }: SearchUsersRequest): Promise<Result<User[]>> {
-    const trimmedQuery = query?.trim();
+    if (typeof query !== 'string') {
+      throw new BadRequestException('Search query must be a string');
+    }
+
+    const trimmedQuery = query.trim();
 
     if (!trimmedQuery || trimmedQuery.length < MINIMUM_QUERY_LENGTH) {
       throw new BadRequestException(
