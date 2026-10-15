@@ -1,6 +1,39 @@
 import { TypeOrmUserRepository } from './user_repository';
 
 describe('TypeOrmUserRepository.search', () => {
+  it('selects only bounded display-name columns and never maps a full profile', async () => {
+    const repository = {
+      find: jest
+        .fn()
+        .mockResolvedValue([
+          {
+            id: 'user-id',
+            name: 'Alice',
+            email: 'private',
+            password: 'secret',
+          },
+        ]),
+    };
+    const userRepository = new TypeOrmUserRepository(repository as never);
+    const result = await userRepository.findDisplayNames(['user-id']);
+    expect(repository.find).toHaveBeenCalledWith({
+      select: { id: true, name: true },
+      where: {
+        id: expect.objectContaining({ _type: 'in', _value: ['user-id'] }),
+      },
+      take: 50,
+    });
+    expect(result.value).toEqual([{ id: 'user-id', name: 'Alice' }]);
+  });
+
+  it('does not issue a database query for an empty display-name batch', async () => {
+    const repository = { find: jest.fn() };
+    const userRepository = new TypeOrmUserRepository(repository as never);
+    await expect(userRepository.findDisplayNames([])).resolves.toMatchObject({
+      value: [],
+    });
+    expect(repository.find).not.toHaveBeenCalled();
+  });
   it('filters name or email case-insensitively in the database and bounds the query', async () => {
     const queryBuilder = {
       where: jest.fn().mockReturnThis(),

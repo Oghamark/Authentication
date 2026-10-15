@@ -2,7 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { IUserRepository } from 'src/application/interfaces/user_repository';
 import { User } from 'src/domain/entities/user.entity';
 import { UserEntity } from 'src/infrastructure/database/entities/user.entity';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
+import { UserDisplayName } from 'src/application/dtos/user/get_display_names_request';
 import { UserMapper } from '../mappers/user.mapper';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Result } from 'src/core/result';
@@ -41,6 +42,18 @@ export class TypeOrmUserRepository implements IUserRepository {
     const users = UserMapper.toDomainList(userEntities);
 
     return Result.ok(users);
+  }
+
+  async findDisplayNames(
+    userIds: string[],
+  ): Promise<Result<UserDisplayName[]>> {
+    if (userIds.length === 0) return Result.ok([]);
+    const rows = await this._repository.find({
+      select: { id: true, name: true },
+      where: { id: In(userIds) },
+      take: 50,
+    });
+    return Result.ok(rows.map(({ id, name }) => ({ id, name })));
   }
 
   async update(entity: User): Promise<Result> {

@@ -9,6 +9,7 @@ describe('UserController search route', () => {
   const searchUsersUseCase = {
     execute: jest.fn(),
   };
+  const displayNamesUseCase = { execute: jest.fn() };
   const controller = new UserController(
     {} as never,
     {} as never,
@@ -17,10 +18,33 @@ describe('UserController search route', () => {
     {} as never,
     {} as never,
     searchUsersUseCase as never,
+    displayNamesUseCase as never,
   );
 
   beforeEach(() => jest.clearAllMocks());
 
+  it('provides an authenticated non-admin display-name POST with only safe fields', async () => {
+    displayNamesUseCase.execute.mockResolvedValue(
+      Result.ok([
+        { id: 'user-id', name: 'Alice', email: 'private', password: 'secret' },
+      ]),
+    );
+    await expect(
+      controller.displayNames({ userIds: ['user-id'] }),
+    ).resolves.toEqual({
+      success: true,
+      value: [{ id: 'user-id', name: 'Alice' }],
+    });
+    expect(Reflect.getMetadata(PATH_METADATA, controller.displayNames)).toBe(
+      'display-names',
+    );
+    expect(Reflect.getMetadata(METHOD_METADATA, controller.displayNames)).toBe(
+      1,
+    );
+    expect(
+      Reflect.getMetadata(ROLES_KEY, controller.displayNames),
+    ).toBeUndefined();
+  });
   it('is an authenticated non-admin static GET route and precedes the id parameter route', () => {
     const guards = Reflect.getMetadata(
       '__guards__',

@@ -129,6 +129,11 @@ All user endpoints require a valid JWT. Most require the `ADMIN` role.
 | GET    | `/users`          | JWT, ADMIN | List all users.                |
 | POST   | `/users`          | JWT, ADMIN | Create a user.                 |
 | GET    | `/users/:id`      | JWT        | Get a user by ID.              |
+| POST   | `/users/display-names` | JWT | Look up at most 50 UUIDs, returning only account IDs and display names. |
 | PATCH  | `/users/:id`      | JWT, ADMIN | Update a user's profile.       |
 | PATCH  | `/users/:id/role` | JWT, ADMIN | Update a user's role.          |
 | DELETE | `/users`          | JWT, ADMIN | Delete a user by email.        |
+
+Display-name requests use `{ "userIds": ["123e4567-e89b-42d3-a456-426614174001"] }`.
+The successful Result envelope is `{ "success": true, "value": [{ "id": "...", "name": "Alice" }] }`.
+An empty batch is accepted. Requests must contain at most 50 UUID entries; duplicate UUIDs are normalized and looked up once. Unknown/deleted users are omitted from successful results. Failures retain the normal Result failure envelope or HTTP error and must not be treated as a missing account. This authenticated, non-admin endpoint never returns email addresses, roles, authentication providers, password data, or full profiles. It queries only ID/name columns.

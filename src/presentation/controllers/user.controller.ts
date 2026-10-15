@@ -27,6 +27,8 @@ import { toUserPrincipal } from 'src/application/dtos/user/user_principal';
 import { AuthenticatedRequest } from 'src/application/dtos/auth/authenticated_request';
 import { SearchUsersUseCase } from 'src/application/use_cases/user/search_users';
 import { SearchUsersRequest } from 'src/application/dtos/user/search_users_request';
+import { GetDisplayNamesUseCase } from 'src/application/use_cases/user/get_display_names';
+import { GetDisplayNamesRequest } from 'src/application/dtos/user/get_display_names_request';
 
 @Controller('users')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -39,6 +41,7 @@ export class UserController {
     private readonly GetUserByIdUseCase: GetUserByIdUseCase,
     private readonly DeleteUserByEmailUseCase: DeleteUserByEmailUseCase,
     private readonly SearchUsersUseCase: SearchUsersUseCase,
+    private readonly GetDisplayNamesUseCase: GetDisplayNamesUseCase,
   ) {}
 
   @Get()
@@ -94,6 +97,17 @@ export class UserController {
     return {
       success: true,
       value: toUserPrincipal(getUsersResult.value),
+    };
+  }
+
+  @Post('display-names')
+  async displayNames(@Body() request: GetDisplayNamesRequest) {
+    const result = await this.GetDisplayNamesUseCase.execute(request);
+    if (result.isFailure())
+      return { success: false, message: result.failure.message };
+    return {
+      success: true,
+      value: result.value!.map(({ id, name }) => ({ id, name })),
     };
   }
 
