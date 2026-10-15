@@ -6,6 +6,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   UseGuards,
   Request,
 } from '@nestjs/common';
@@ -24,6 +25,8 @@ import { JwtAuthGuard } from 'src/infrastructure/guards/jwt_auth.guard';
 import { Roles } from 'src/infrastructure/decorators/roles.decorator';
 import { toUserPrincipal } from 'src/application/dtos/user/user_principal';
 import { AuthenticatedRequest } from 'src/application/dtos/auth/authenticated_request';
+import { SearchUsersUseCase } from 'src/application/use_cases/user/search_users';
+import { SearchUsersRequest } from 'src/application/dtos/user/search_users_request';
 
 @Controller('users')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -35,6 +38,7 @@ export class UserController {
     private readonly GetUsersUseCase: GetUsersUseCase,
     private readonly GetUserByIdUseCase: GetUserByIdUseCase,
     private readonly DeleteUserByEmailUseCase: DeleteUserByEmailUseCase,
+    private readonly SearchUsersUseCase: SearchUsersUseCase,
   ) {}
 
   @Get()
@@ -52,6 +56,27 @@ export class UserController {
     return {
       success: true,
       value: getUsersResult.value!.map(toUserPrincipal),
+    };
+  }
+
+  @Get('search')
+  async search(@Query() query: SearchUsersRequest) {
+    const searchUsersResult = await this.SearchUsersUseCase.execute(query);
+
+    if (searchUsersResult.isFailure()) {
+      return {
+        success: false,
+        message: searchUsersResult.failure?.message,
+      };
+    }
+
+    return {
+      success: true,
+      value: searchUsersResult.value!.map(({ id, name, email }) => ({
+        id,
+        name,
+        email,
+      })),
     };
   }
 

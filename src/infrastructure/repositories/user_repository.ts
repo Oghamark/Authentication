@@ -10,6 +10,8 @@ import { UserNotFoundFailure } from 'src/domain/failures/user_failures';
 
 @Injectable()
 export class TypeOrmUserRepository implements IUserRepository {
+  private static readonly MAX_SEARCH_RESULTS = 20;
+
   constructor(
     @InjectRepository(UserEntity)
     private readonly _repository: Repository<UserEntity>,
@@ -19,6 +21,19 @@ export class TypeOrmUserRepository implements IUserRepository {
     const exists = this._repository.exists({ where: { id } });
 
     return Result.ok(exists);
+  }
+
+  async search(query: string, limit: number): Promise<Result<User[]>> {
+    const escapedQuery = query.replace(/[\\%_]/g, '\\$&');
+    const searchQuery = `%${escapedQuery}%`;
+    const userEntities = await this._repository
+      .createQueryBuilder('user')
+      .where("user.name ILIKE :query ESCAPE '\\'", { query: searchQuery })
+      .orWhere("user.email ILIKE :query ESCAPE '\\'", { query: searchQuery })
+      .take(Math.min(limit, TypeOrmUserRepository.MAX_SEARCH_RESULTS))
+      .getMany();
+
+    return Result.ok(UserMapper.toDomainList(userEntities));
   }
 
   async findAll(): Promise<Result<User[]>> {

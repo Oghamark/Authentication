@@ -8,6 +8,7 @@ import { GetUserByIdUseCase } from 'src/application/use_cases/user/get_user_by_i
 import { GetUsersUseCase } from 'src/application/use_cases/user/get_users';
 import { UpdateUserUseCase } from 'src/application/use_cases/user/update_user';
 import { UpdateUserRoleUseCase } from 'src/application/use_cases/user/update_user_role';
+import { SearchUsersUseCase } from 'src/application/use_cases/user/search_users';
 import { UserEntity } from 'src/infrastructure/database/entities/user.entity';
 import { BcryptCryptoGateway } from 'src/infrastructure/gateways/bcrypt_crypto.gateway';
 import { UserMapper } from 'src/infrastructure/mappers/user.mapper';
@@ -29,6 +30,7 @@ import { UserController } from 'src/presentation/controllers/user.controller';
 
     // Use Cases (add all that your controller uses)
     GetUsersUseCase,
+    SearchUsersUseCase,
     GetUserByIdUseCase,
     GetUserByEmailUseCase,
     CreateUserUseCase,
@@ -46,6 +48,7 @@ import { UserController } from 'src/presentation/controllers/user.controller';
     'CryptoGateway',
     UserMapper,
     GetUsersUseCase,
+    SearchUsersUseCase,
     GetUserByIdUseCase,
     GetUserByEmailUseCase,
     CreateUserUseCase,
