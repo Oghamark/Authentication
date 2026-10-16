@@ -1,18 +1,55 @@
 import { TypeOrmUserRepository } from './user_repository';
 
 describe('TypeOrmUserRepository.search', () => {
+  it.each(['Alice', 'alice@example.com', 'alice@', 'a%_\\'])(
+    'social search only matches literal names or an exact email: %s',
+    async (query) => {
+      const builder = {
+        select: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        orWhere: jest.fn().mockReturnThis(),
+        orderBy: jest.fn().mockReturnThis(),
+        addOrderBy: jest.fn().mockReturnThis(),
+        take: jest.fn().mockReturnThis(),
+        getMany: jest
+          .fn()
+          .mockResolvedValue([
+            { id: 'id', name: 'Alice', email: 'private', password: 'private' },
+          ]),
+      };
+      const repository = {
+        createQueryBuilder: jest.fn().mockReturnValue(builder),
+      };
+      const result = await new TypeOrmUserRepository(
+        repository as never,
+      ).searchSocialAccounts(query, 100);
+      expect(builder.select).toHaveBeenCalledWith(['user.id', 'user.name']);
+      expect(builder.where).toHaveBeenCalledWith(
+        "user.name ILIKE :name ESCAPE '\\'",
+        {
+          name: `%${query.replace(/[\\%_]/g, '\\$&')}%`,
+        },
+      );
+      expect(builder.orWhere).toHaveBeenCalledWith(
+        'LOWER(user.email) = LOWER(:email)',
+        {
+          email: query,
+        },
+      );
+      expect(builder.take).toHaveBeenCalledWith(20);
+      expect(result.value).toEqual([{ id: 'id', name: 'Alice' }]);
+    },
+  );
   it('selects only bounded display-name columns and never maps a full profile', async () => {
     const repository = {
-      find: jest
-        .fn()
-        .mockResolvedValue([
-          {
-            id: 'user-id',
-            name: 'Alice',
-            email: 'private',
-            password: 'secret',
-          },
-        ]),
+      find: jest.fn().mockResolvedValue([
+        {
+          id: 'user-id',
+          name: 'Alice',
+          email: 'private',
+          password: 'secret',
+        },
+      ]),
     };
     const userRepository = new TypeOrmUserRepository(repository as never);
     const result = await userRepository.findDisplayNames(['user-id']);

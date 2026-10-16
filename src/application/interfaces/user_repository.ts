@@ -7,5 +7,9 @@ export interface IUserRepository extends IRepository<User> {
   findByEmail(email: string): Promise<Result<User>>;
   findByName(name: string): Promise<Result<User>>;
   search(query: string, limit: number): Promise<Result<User[]>>;
+  searchSocialAccounts(
+    query: string,
+    limit: number,
+  ): Promise<Result<UserDisplayName[]>>;
   findDisplayNames(userIds: string[]): Promise<Result<UserDisplayName[]>>;
 }

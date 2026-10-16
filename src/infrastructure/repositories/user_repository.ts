@@ -44,6 +44,24 @@ export class TypeOrmUserRepository implements IUserRepository {
     return Result.ok(users);
   }
 
+  async searchSocialAccounts(
+    query: string,
+    limit: number,
+  ): Promise<Result<UserDisplayName[]>> {
+    const rows = await this._repository
+      .createQueryBuilder('user')
+      .select(['user.id', 'user.name'])
+      .where("user.name ILIKE :name ESCAPE '\\'", {
+        name: `%${query.replace(/[\\%_]/g, '\\$&')}%`,
+      })
+      .orWhere('LOWER(user.email) = LOWER(:email)', { email: query })
+      .orderBy('user.name', 'ASC')
+      .addOrderBy('user.id', 'ASC')
+      .take(Math.max(1, Math.min(limit, 20)))
+      .getMany();
+    return Result.ok(rows.map(({ id, name }) => ({ id, name })));
+  }
+
   async findDisplayNames(
     userIds: string[],
   ): Promise<Result<UserDisplayName[]>> {

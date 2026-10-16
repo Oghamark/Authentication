@@ -9,6 +9,7 @@ import {
   Query,
   UseGuards,
   Request,
+  ServiceUnavailableException,
 } from '@nestjs/common';
 import { CreateUserUseCase } from 'src/application/use_cases/user/create_user';
 import { UpdateUserUseCase } from 'src/application/use_cases/user/update_user';
@@ -29,6 +30,8 @@ import { SearchUsersUseCase } from 'src/application/use_cases/user/search_users'
 import { SearchUsersRequest } from 'src/application/dtos/user/search_users_request';
 import { GetDisplayNamesUseCase } from 'src/application/use_cases/user/get_display_names';
 import { GetDisplayNamesRequest } from 'src/application/dtos/user/get_display_names_request';
+import { SearchSocialAccountsUseCase } from 'src/application/use_cases/user/search_social_accounts';
+import { SocialSearchRateGuard } from 'src/infrastructure/guards/social_search_rate.guard';
 
 @Controller('users')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -42,6 +45,7 @@ export class UserController {
     private readonly DeleteUserByEmailUseCase: DeleteUserByEmailUseCase,
     private readonly SearchUsersUseCase: SearchUsersUseCase,
     private readonly GetDisplayNamesUseCase: GetDisplayNamesUseCase,
+    private readonly SearchSocialAccountsUseCase: SearchSocialAccountsUseCase,
   ) {}
 
   @Get()
@@ -80,6 +84,19 @@ export class UserController {
         name,
         email,
       })),
+    };
+  }
+
+  @Get('social-search')
+  @UseGuards(SocialSearchRateGuard)
+  async socialSearch(@Query() query: SearchUsersRequest) {
+    const result = await this.SearchSocialAccountsUseCase.execute(query);
+    if (result.isFailure()) {
+      throw new ServiceUnavailableException('Account search is unavailable');
+    }
+    return {
+      success: true,
+      value: result.value!.map(({ id, name }) => ({ id, name })),
     };
   }
 

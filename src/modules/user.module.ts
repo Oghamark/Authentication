@@ -15,10 +15,14 @@ import { BcryptCryptoGateway } from 'src/infrastructure/gateways/bcrypt_crypto.g
 import { UserMapper } from 'src/infrastructure/mappers/user.mapper';
 import { TypeOrmUserRepository } from 'src/infrastructure/repositories/user_repository';
 import { UserController } from 'src/presentation/controllers/user.controller';
+import { SearchSocialAccountsUseCase } from 'src/application/use_cases/user/search_social_accounts';
+import { SocialSearchRateGuard } from 'src/infrastructure/guards/social_search_rate.guard';
 
 @Module({
   imports: [TypeOrmModule.forFeature([UserEntity]), AuthModule],
   providers: [
+    SearchSocialAccountsUseCase,
+    SocialSearchRateGuard,
     // Repository
     {
       provide: 'UserRepository',
