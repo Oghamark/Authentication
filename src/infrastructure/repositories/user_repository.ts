@@ -2,7 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { IUserRepository } from 'src/application/interfaces/user_repository';
 import { User } from 'src/domain/entities/user.entity';
 import { UserEntity } from 'src/infrastructure/database/entities/user.entity';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
+import { UserDisplayName } from 'src/application/dtos/user/get_display_names_request';
 import { UserMapper } from '../mappers/user.mapper';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Result } from 'src/core/result';
@@ -10,6 +11,8 @@ import { UserNotFoundFailure } from 'src/domain/failures/user_failures';
 
 @Injectable()
 export class TypeOrmUserRepository implements IUserRepository {
+  private static readonly MAX_SEARCH_RESULTS = 20;
+
   constructor(
     @InjectRepository(UserEntity)
     private readonly _repository: Repository<UserEntity>,
@@ -21,11 +24,54 @@ export class TypeOrmUserRepository implements IUserRepository {
     return Result.ok(exists);
   }
 
+  async search(query: string, limit: number): Promise<Result<User[]>> {
+    const escapedQuery = query.replace(/[\\%_]/g, '\\$&');
+    const searchQuery = `%${escapedQuery}%`;
+    const userEntities = await this._repository
+      .createQueryBuilder('user')
+      .where("user.name ILIKE :query ESCAPE '\\'", { query: searchQuery })
+      .orWhere("user.email ILIKE :query ESCAPE '\\'", { query: searchQuery })
+      .take(Math.min(limit, TypeOrmUserRepository.MAX_SEARCH_RESULTS))
+      .getMany();
+
+    return Result.ok(UserMapper.toDomainList(userEntities));
+  }
+
   async findAll(): Promise<Result<User[]>> {
     const userEntities = await this._repository.find();
     const users = UserMapper.toDomainList(userEntities);
 
     return Result.ok(users);
+  }
+
+  async searchSocialAccounts(
+    query: string,
+    limit: number,
+  ): Promise<Result<UserDisplayName[]>> {
+    const rows = await this._repository
+      .createQueryBuilder('user')
+      .select(['user.id', 'user.name'])
+      .where("user.name ILIKE :name ESCAPE '\\'", {
+        name: `%${query.replace(/[\\%_]/g, '\\$&')}%`,
+      })
+      .orWhere('LOWER(user.email) = LOWER(:email)', { email: query })
+      .orderBy('user.name', 'ASC')
+      .addOrderBy('user.id', 'ASC')
+      .take(Math.max(1, Math.min(limit, 20)))
+      .getMany();
+    return Result.ok(rows.map(({ id, name }) => ({ id, name })));
+  }
+
+  async findDisplayNames(
+    userIds: string[],
+  ): Promise<Result<UserDisplayName[]>> {
+    if (userIds.length === 0) return Result.ok([]);
+    const rows = await this._repository.find({
+      select: { id: true, name: true },
+      where: { id: In(userIds) },
+      take: 50,
+    });
+    return Result.ok(rows.map(({ id, name }) => ({ id, name })));
   }
 
   async update(entity: User): Promise<Result> {

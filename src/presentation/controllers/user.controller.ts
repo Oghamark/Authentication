@@ -6,8 +6,10 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   UseGuards,
   Request,
+  ServiceUnavailableException,
 } from '@nestjs/common';
 import { CreateUserUseCase } from 'src/application/use_cases/user/create_user';
 import { UpdateUserUseCase } from 'src/application/use_cases/user/update_user';
@@ -24,6 +26,12 @@ import { JwtAuthGuard } from 'src/infrastructure/guards/jwt_auth.guard';
 import { Roles } from 'src/infrastructure/decorators/roles.decorator';
 import { toUserPrincipal } from 'src/application/dtos/user/user_principal';
 import { AuthenticatedRequest } from 'src/application/dtos/auth/authenticated_request';
+import { SearchUsersUseCase } from 'src/application/use_cases/user/search_users';
+import { SearchUsersRequest } from 'src/application/dtos/user/search_users_request';
+import { GetDisplayNamesUseCase } from 'src/application/use_cases/user/get_display_names';
+import { GetDisplayNamesRequest } from 'src/application/dtos/user/get_display_names_request';
+import { SearchSocialAccountsUseCase } from 'src/application/use_cases/user/search_social_accounts';
+import { SocialSearchRateGuard } from 'src/infrastructure/guards/social_search_rate.guard';
 
 @Controller('users')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -35,6 +43,9 @@ export class UserController {
     private readonly GetUsersUseCase: GetUsersUseCase,
     private readonly GetUserByIdUseCase: GetUserByIdUseCase,
     private readonly DeleteUserByEmailUseCase: DeleteUserByEmailUseCase,
+    private readonly SearchUsersUseCase: SearchUsersUseCase,
+    private readonly GetDisplayNamesUseCase: GetDisplayNamesUseCase,
+    private readonly SearchSocialAccountsUseCase: SearchSocialAccountsUseCase,
   ) {}
 
   @Get()
@@ -55,6 +66,40 @@ export class UserController {
     };
   }
 
+  @Get('search')
+  async search(@Query() query: SearchUsersRequest) {
+    const searchUsersResult = await this.SearchUsersUseCase.execute(query);
+
+    if (searchUsersResult.isFailure()) {
+      return {
+        success: false,
+        message: searchUsersResult.failure?.message,
+      };
+    }
+
+    return {
+      success: true,
+      value: searchUsersResult.value!.map(({ id, name, email }) => ({
+        id,
+        name,
+        email,
+      })),
+    };
+  }
+
+  @Get('social-search')
+  @UseGuards(SocialSearchRateGuard)
+  async socialSearch(@Query() query: SearchUsersRequest) {
+    const result = await this.SearchSocialAccountsUseCase.execute(query);
+    if (result.isFailure()) {
+      throw new ServiceUnavailableException('Account search is unavailable');
+    }
+    return {
+      success: true,
+      value: result.value!.map(({ id, name }) => ({ id, name })),
+    };
+  }
+
   @Get(':id')
   async findById(@Param() params: GetUserByIdRequest) {
     const getUsersResult = await this.GetUserByIdUseCase.execute(params);
@@ -69,6 +114,17 @@ export class UserController {
     return {
       success: true,
       value: toUserPrincipal(getUsersResult.value),
+    };
+  }
+
+  @Post('display-names')
+  async displayNames(@Body() request: GetDisplayNamesRequest) {
+    const result = await this.GetDisplayNamesUseCase.execute(request);
+    if (result.isFailure())
+      return { success: false, message: result.failure.message };
+    return {
+      success: true,
+      value: result.value!.map(({ id, name }) => ({ id, name })),
     };
   }
 

@@ -8,15 +8,21 @@ import { GetUserByIdUseCase } from 'src/application/use_cases/user/get_user_by_i
 import { GetUsersUseCase } from 'src/application/use_cases/user/get_users';
 import { UpdateUserUseCase } from 'src/application/use_cases/user/update_user';
 import { UpdateUserRoleUseCase } from 'src/application/use_cases/user/update_user_role';
+import { SearchUsersUseCase } from 'src/application/use_cases/user/search_users';
+import { GetDisplayNamesUseCase } from 'src/application/use_cases/user/get_display_names';
 import { UserEntity } from 'src/infrastructure/database/entities/user.entity';
 import { BcryptCryptoGateway } from 'src/infrastructure/gateways/bcrypt_crypto.gateway';
 import { UserMapper } from 'src/infrastructure/mappers/user.mapper';
 import { TypeOrmUserRepository } from 'src/infrastructure/repositories/user_repository';
 import { UserController } from 'src/presentation/controllers/user.controller';
+import { SearchSocialAccountsUseCase } from 'src/application/use_cases/user/search_social_accounts';
+import { SocialSearchRateGuard } from 'src/infrastructure/guards/social_search_rate.guard';
 
 @Module({
   imports: [TypeOrmModule.forFeature([UserEntity]), AuthModule],
   providers: [
+    SearchSocialAccountsUseCase,
+    SocialSearchRateGuard,
     // Repository
     {
       provide: 'UserRepository',
@@ -29,6 +35,8 @@ import { UserController } from 'src/presentation/controllers/user.controller';
 
     // Use Cases (add all that your controller uses)
     GetUsersUseCase,
+    SearchUsersUseCase,
+    GetDisplayNamesUseCase,
     GetUserByIdUseCase,
     GetUserByEmailUseCase,
     CreateUserUseCase,
@@ -46,6 +54,8 @@ import { UserController } from 'src/presentation/controllers/user.controller';
     'CryptoGateway',
     UserMapper,
     GetUsersUseCase,
+    SearchUsersUseCase,
+    GetDisplayNamesUseCase,
     GetUserByIdUseCase,
     GetUserByEmailUseCase,
     CreateUserUseCase,

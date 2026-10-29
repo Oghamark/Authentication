@@ -129,6 +129,29 @@ All user endpoints require a valid JWT. Most require the `ADMIN` role.
 | GET    | `/users`          | JWT, ADMIN | List all users.                |
 | POST   | `/users`          | JWT, ADMIN | Create a user.                 |
 | GET    | `/users/:id`      | JWT        | Get a user by ID.              |
+| GET    | `/users/social-search?query=Alice` | JWT | Search display names or an exact email; return only IDs and display names. |
+| POST   | `/users/display-names` | JWT | Look up at most 50 UUIDs, returning only account IDs and display names. |
 | PATCH  | `/users/:id`      | JWT, ADMIN | Update a user's profile.       |
 | PATCH  | `/users/:id/role` | JWT, ADMIN | Update a user's role.          |
 | DELETE | `/users`          | JWT, ADMIN | Delete a user by email.        |
+
+Display-name requests use `{ "userIds": ["123e4567-e89b-42d3-a456-426614174001"] }`.
+The successful Result envelope is `{ "success": true, "value": [{ "id": "...", "name": "Alice" }] }`.
+An empty batch is accepted. Requests must contain at most 50 UUID entries; duplicate UUIDs are normalized and looked up once. Unknown/deleted users are omitted from successful results. Failures retain the normal Result failure envelope or HTTP error and must not be treated as a missing account. This authenticated, non-admin endpoint never returns email addresses, roles, authentication providers, password data, or full profiles. It queries only ID/name columns.
+
+Social search uses the same names-only success envelope. The trimmed query must
+contain 2–254 characters and no control characters; empty, malformed, or too-long
+queries return HTTP 400. Display-name matching is a case-insensitive literal
+substring (SQL wildcards are escaped), while email matching is case-insensitive
+**equality only**, never a partial-email match. Results contain at most 20 accounts,
+ordered by display name and ID, and never select email or authentication fields.
+No match returns a successful empty array; service/database failures are errors,
+not empty arrays.
+
+The social-search route permits 30 searches per authenticated account per
+60-second window and responds with HTTP 429 and `Retry-After` when exhausted.
+Windows are bounded to 10,000 active accounts; excess new accounts receive HTTP
+503 until space is available. Limits are in-memory and per Authentication
+process (restart resets them); multi-replica deployments should additionally
+enforce an account-based shared limit at their trusted gateway. Existing legacy
+search and administrator endpoints retain their existing contracts.
