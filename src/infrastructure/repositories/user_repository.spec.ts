@@ -1,4 +1,5 @@
 import { TypeOrmUserRepository } from './user_repository';
+import { In } from 'typeorm';
 
 describe('TypeOrmUserRepository.search', () => {
   it.each(['Alice', 'alice@example.com', 'alice@', 'a%_\\'])(
@@ -56,7 +57,7 @@ describe('TypeOrmUserRepository.search', () => {
     expect(repository.find).toHaveBeenCalledWith({
       select: { id: true, name: true },
       where: {
-        id: expect.objectContaining({ _type: 'in', _value: ['user-id'] }),
+        id: In(['user-id']),
       },
       take: 50,
     });

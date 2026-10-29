@@ -65,15 +65,11 @@ describe('UserController search route', () => {
       success: true,
       value: [{ id: 'user-id', name: 'Alice' }],
     });
-    expect(Reflect.getMetadata(PATH_METADATA, controller.displayNames)).toBe(
-      'display-names',
-    );
-    expect(Reflect.getMetadata(METHOD_METADATA, controller.displayNames)).toBe(
-      1,
-    );
-    expect(
-      Reflect.getMetadata(ROLES_KEY, controller.displayNames),
-    ).toBeUndefined();
+    // eslint-disable-next-line @typescript-eslint/unbound-method
+    const handler = controller.displayNames;
+    expect(Reflect.getMetadata(PATH_METADATA, handler)).toBe('display-names');
+    expect(Reflect.getMetadata(METHOD_METADATA, handler)).toBe(1);
+    expect(Reflect.getMetadata(ROLES_KEY, handler)).toBeUndefined();
   });
   it('is an authenticated non-admin static GET route and precedes the id parameter route', () => {
     const guards = Reflect.getMetadata(
