@@ -12,7 +12,9 @@ import {
   Get,
   Logger,
   UseFilters,
+  Headers,
 } from '@nestjs/common';
+import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
 import { OidcExceptionFilter } from 'src/infrastructure/filters/oidc-exception.filter';
 import { LoginUseCase } from 'src/application/use_cases/auth/login';
 import { ThirdPartyLoginUseCase } from 'src/application/use_cases/auth/third_party_login';
@@ -36,6 +38,12 @@ import {
 import { CurrentUser } from 'src/infrastructure/decorators/current_user.decorator';
 import { Cookie } from 'src/infrastructure/decorators/cookie.decorator';
 import { UserPassAuthGuard } from 'src/infrastructure/guards/user_pass_auth.guard';
+import { PasswordService } from 'src/infrastructure/password.service';
+import { ChangePasswordRequest } from 'src/application/dtos/auth/change_password_request';
+import {
+  RequestPasswordResetDto,
+  ResetPasswordDto,
+} from 'src/application/dtos/auth/reset_password_request';
 
 type OidcReturnContext = {
   returnTo: string;
@@ -54,6 +62,7 @@ export class AuthController {
     private logoutUseCase: LogoutUseCase,
     private readonly oidcStateService: OidcStateService,
     private readonly pkceAuthorizationCodeService: PkceAuthorizationCodeService,
+    private readonly passwordService: PasswordService,
   ) {}
 
   private readonly logger = new Logger('AuthController');
@@ -233,18 +242,7 @@ export class AuthController {
     @Cookie('refresh_token') oldRefreshToken: string | undefined,
     @Res({ passthrough: true }) response: Response,
   ) {
-    const result = await this.handleLogin(request, response);
-
-    // Rotate: revoke the consumed refresh token now that a new one has been issued.
-    // We do this after issuing the new tokens so a failure here does not log the user out.
-    if (oldRefreshToken && request.user?.id) {
-      await this.logoutUseCase.execute({
-        userId: request.user.id,
-        refreshToken: oldRefreshToken,
-      });
-    }
-
-    return result;
+    return await this.handleLogin(request, response, oldRefreshToken);
   }
 
   @UseGuards(JwtAuthGuard)
@@ -282,7 +280,53 @@ export class AuthController {
     return { success: true, value: user };
   }
 
-  private async handleLogin(request: AuthenticatedRequest, response: Response) {
+  @UseGuards(JwtAuthGuard, ThrottlerGuard)
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  @Post('password/change')
+  async changePassword(
+    @CurrentUser() user: UserPrincipal,
+    @Body() body: ChangePasswordRequest,
+    @Res({ passthrough: true }) response: Response,
+  ) {
+    await this.passwordService.change(
+      user.id,
+      body.currentPassword,
+      body.newPassword,
+    );
+    response.clearCookie('refresh_token', {
+      httpOnly: true,
+      path: '/refresh',
+      secure: process.env.NODE_ENV === 'production',
+    });
+    response.clearCookie('access_token', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+    });
+    return { success: true };
+  }
+
+  @Post('password/reset-token')
+  async createPasswordResetToken(
+    @Headers('authorization') authorization: string | undefined,
+    @Body() body: RequestPasswordResetDto,
+  ) {
+    this.passwordService.verifyRecoveryRequest(authorization, body.email);
+    return { token: await this.passwordService.createResetToken(body.email) };
+  }
+
+  @UseGuards(ThrottlerGuard)
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  @Post('password/reset')
+  async resetPassword(@Body() body: ResetPasswordDto) {
+    await this.passwordService.reset(body.token, body.newPassword);
+    return { success: true };
+  }
+
+  private async handleLogin(
+    request: AuthenticatedRequest,
+    response: Response,
+    oldRefreshToken?: string,
+  ) {
     const loginResult = await this.loginUseCase.execute(request);
 
     if (loginResult.isFailure()) {
@@ -290,6 +334,17 @@ export class AuthController {
     }
 
     const { accessToken, refreshToken, userId, message } = loginResult.value!;
+
+    if (oldRefreshToken) {
+      const revoked = await this.logoutUseCase.execute({
+        userId,
+        refreshToken: oldRefreshToken,
+      });
+      if (revoked.isFailure()) {
+        await this.logoutUseCase.execute({ userId, refreshToken });
+        throw new UnauthorizedException('Invalid or expired refresh token');
+      }
+    }
 
     response.cookie('refresh_token', refreshToken, {
       httpOnly: true,

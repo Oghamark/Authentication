@@ -38,6 +38,8 @@ import { Result } from 'src/core/result';
 import { Inject } from '@nestjs/common';
 import { LocalAuthGuard } from 'src/infrastructure/guards/local_auth.guard';
 import { LdapAuthGuard } from 'src/infrastructure/guards/ldap_auth.guard';
+import { PasswordService } from 'src/infrastructure/password.service';
+import { ThrottlerModule } from '@nestjs/throttler';
 
 @Module({
   imports: [
@@ -45,6 +47,7 @@ import { LdapAuthGuard } from 'src/infrastructure/guards/ldap_auth.guard';
     TypeOrmModule.forFeature([RefreshTokenEntity]),
     TypeOrmModule.forFeature([AuthConfigEntity]),
     PassportModule,
+    ThrottlerModule.forRoot([{ ttl: 60000, limit: 10 }]),
     JwtModule.registerAsync({
       inject: [jwtConfig.KEY],
       useFactory: (config: JwtConfig) => ({
@@ -82,6 +85,7 @@ import { LdapAuthGuard } from 'src/infrastructure/guards/ldap_auth.guard';
     OidcAuthGuard,
     LocalAuthGuard,
     LdapAuthGuard,
+    PasswordService,
     // OIDC state service for managing returnTo state between start and callback
     OidcStateService,
     // PKCE authorization code service for native app token exchange (RFC 8252)

@@ -41,7 +41,6 @@ export class LogoutUseCase implements IUseCase<LogoutRequest, void> {
     if (!refreshToken || !userId) {
       this.logger.warn('Missing refresh token or user ID for logout', {
         userId,
-        refreshToken,
       });
       return Result.fail(
         new GenericFailure('Missing refresh token or user ID for logout'),
@@ -57,7 +56,6 @@ export class LogoutUseCase implements IUseCase<LogoutRequest, void> {
     if (findTokenResult.isFailure()) {
       this.logger.warn('Refresh token not found for logout', {
         userId,
-        refreshToken,
         error: findTokenResult.failure,
       });
       return Result.fail(
@@ -72,7 +70,6 @@ export class LogoutUseCase implements IUseCase<LogoutRequest, void> {
     if (revokeResult.isFailure()) {
       this.logger.warn('Failed to revoke refresh token for logout', {
         userId,
-        refreshToken,
         error: revokeResult.failure,
       });
 
