@@ -138,6 +138,7 @@ export class AuthController {
           stateEntry.codeChallenge,
         );
         const sep = stateEntry.returnTo.includes('?') ? '&' : '?';
+        response.locals.auditOidcLoginSuccess = true;
         response.redirect(
           `${stateEntry.returnTo}${sep}code=${encodeURIComponent(code)}`,
         );
@@ -146,12 +147,15 @@ export class AuthController {
 
       // Web client: generate cookies as usual, then redirect
       await this.handleLogin(request, response);
+      response.locals.auditOidcLoginSuccess = true;
       response.redirect(stateEntry.returnTo);
       return;
     }
 
     // Default JSON response when no redirect is requested (browser direct call)
-    return await this.handleLogin(request, response);
+    const result = await this.handleLogin(request, response);
+    response.locals.auditOidcLoginSuccess = true;
+    return result;
   }
 
   /**
@@ -162,6 +166,7 @@ export class AuthController {
   async exchangeToken(
     @Body() body: { code: string; codeVerifier: string },
     @Res({ passthrough: true }) response: Response,
+    @Req() request: AuthenticatedRequest,
   ) {
     if (!body.code || !body.codeVerifier) {
       throw new BadRequestException('code and codeVerifier are required');
@@ -176,14 +181,15 @@ export class AuthController {
       throw new UnauthorizedException('Invalid or expired authorization code');
     }
 
-    const fakeRequest = { user } as AuthenticatedRequest;
-    return await this.handleLogin(fakeRequest, response);
+    request.user = user;
+    return await this.handleLogin(request, response);
   }
 
   @Post('sign-up')
   async signUp(
     @Body() body: CreateUserRequest,
     @Res({ passthrough: true }) response: Response,
+    @Req() request: AuthenticatedRequest,
   ) {
     this.logger.debug('Sign Up');
     const getAuthConfigResult = await this.getAuthConfigUseCase.execute();
@@ -212,9 +218,8 @@ export class AuthController {
       throw new Error('Failed to create user');
     }
 
-    const user = toUserPrincipal(createUserResult.value!);
-
-    return await this.handleLogin({ user } as AuthenticatedRequest, response);
+    request.user = toUserPrincipal(createUserResult.value!);
+    return await this.handleLogin(request, response);
   }
 
   /**
@@ -253,7 +258,7 @@ export class AuthController {
     @Res({ passthrough: true }) response: Response,
     @Body() body: { logoutAll?: boolean },
   ) {
-    await this.logoutUseCase.execute({
+    const result = await this.logoutUseCase.execute({
       userId: user.id,
       refreshToken,
       logoutAll: body?.logoutAll,
@@ -270,6 +275,7 @@ export class AuthController {
       secure: process.env.NODE_ENV === 'production',
     });
 
+    if (result.isFailure()) response.locals.auditOutcomeFailure = true;
     return;
   }
 

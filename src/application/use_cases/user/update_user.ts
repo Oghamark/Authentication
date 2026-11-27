@@ -39,7 +39,8 @@ export class UpdateUserUseCase implements IUseCase<UpdateUserRequest, User> {
       user.password = password ?? user.password;
       user.role = role ?? user.role;
 
-      await this.userRepository.update(user);
+      const updateResult = await this.userRepository.update(user);
+      if (updateResult.isFailure()) return Result.fail(updateResult.failure);
       return Result.ok(user);
     } catch (error) {
       this.logger.error(

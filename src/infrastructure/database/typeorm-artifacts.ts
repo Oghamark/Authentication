@@ -2,11 +2,13 @@ import { join } from 'path';
 import { AuthConfigEntity } from './entities/auth_config.entity';
 import { RefreshTokenEntity } from './entities/refresh_token.entity';
 import { UserEntity } from './entities/user.entity';
+import { AuditLogEntity } from './entities/audit-log.entity';
 
 export const typeOrmEntities = [
   UserEntity,
   RefreshTokenEntity,
   AuthConfigEntity,
+  AuditLogEntity,
 ];
 
 export const typeOrmMigrations = [
