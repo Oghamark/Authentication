@@ -53,6 +53,24 @@ A self-hosted JWT authentication service built with NestJS and TypeORM. Supports
 npm run start:dev
 ```
 
+## Audit logs
+
+The service records mutation requests and successful OIDC callbacks in the
+`audit_log` table, excluding routine refreshes and read-only requests. Entries
+contain route templates and UUID resource IDs, not request bodies, query strings,
+credentials, or raw URLs. Actor details are snapshots and survive user deletion.
+Recording runs after the response; failures are reported in the service logs.
+No automatic retention policy is configured.
+
+Administrators can query `GET /audit-logs` using `limit` (1 to 100, default 25),
+`offset` (0 to 10,000,000, default 0), `actor`, `action`, `outcome` (`success` or `failure`),
+and ISO timestamps `from` and `to`. Search values are limited to 200 characters.
+Results contain `data`, `total`, `limit`, and `offset`, ordered newest first.
+Action searches match the method and route together, such as `DELETE /users`.
+Each entry includes the HTTP `statusCode` and a persisted `outcome`. Outcome is
+failure for HTTP errors, JSON results with `success: false`, and refresh token
+invalidation failures.
+
 ## Docker
 
 Build and run with Docker:
