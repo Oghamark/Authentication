@@ -6,6 +6,7 @@ import { AuthModule } from './modules/auth.module';
 import { AppConfigModule } from './modules/config.module';
 import { HealthModule } from './modules/health.module';
 import { SessionModule } from './modules/session.module';
+import { AuditModule } from './modules/audit.module';
 import {
   jwtConfig,
   databaseConfig,
@@ -30,6 +31,7 @@ import {
     AppConfigModule,
     HealthModule,
     SessionModule,
+    AuditModule,
   ],
   controllers: [],
   providers: [],
